@@ -2,6 +2,49 @@ import png
 from vec3 import Vec
 from math import sqrt
 
+class Sphere (object):
+
+    def __init__(self, center, radius):
+        self.center = center
+        self.radius = radius
+
+    def hit(self, ray, tmin, tmax, hit_rec):
+        oc = ray.origin() - self.center
+        a = Vec.dot(ray.direction(), ray.direction())
+        b = Vec.dot(oc, ray.direction())
+        c = Vec.dot(oc, oc) - self.radius*self.radius
+        discriminant = b*b - a*c
+        if discriminant > 0:
+            temp = (-b - sqrt(b*b-a*c))/a
+            if temp < tmax and temp > tmin:
+                hit_rec['t'] = temp
+                hit_rec['p'] = ray.point_at_paramater(hit_rec['t'])
+                hit_rec['n'] = (hit_rec['p'] - self.center) / self.radius
+                return True
+            temp = (-b + sqrt(b*b-a*c))/a
+            if temp < tmax and temp > tmin:
+                hit_rec['t'] = temp
+                hit_rec['p'] = ray.point_at_paramater(hit_rec['t'])
+                hit_rec['n'] = (hit_rec['p'] - self.center) / self.radius
+                return True
+        return False
+
+class HitableList (list):
+
+    def hit(self, ray, tmin, tmax, hit_rec):
+        temp_rec = {}
+        has_hit = False
+        closest = tmax
+        for i in range(len(self)):
+            if self[i].hit(ray, tmin, closest, temp_rec):
+                has_hit = True
+                closest = temp_rec['t']
+                hit_rec['t'] = temp_rec['t']
+                hit_rec['p'] = temp_rec['p']
+                hit_rec['n'] = temp_rec['n']
+        return has_hit
+
+
 class Ray (object):
 
     def __init__(self, a, b):
@@ -26,44 +69,16 @@ def write_image(p, name='swatch.png', w=200, h=100):
     w.write(f, p)
     f.close()
 
-def test_png_2(width=200, height=100):
-    p = []
-    b = int(0.2 * 255.0)
-    for ri in range(height):
-        row = []
-        r = int((ri / height) * 255.0)
-        for ci in range(width):
-            g = int((ci / width) * 255.0)
-            row.append(r)
-            row.append(g)
-            row.append(b)
-        p.append(row)
-    f = open('swatch2.png', 'wb')
-    w = png.Writer(width, height)
-    w.write(f, p)
-    f.close()
-
-def hit_sphere(center, radius, ray):
-    oc = ray.origin() - center
-    a = Vec.dot(ray.direction(), ray.direction())
-    b = 2.0 * Vec.dot(oc, ray.direction())
-    c = Vec.dot(oc, oc) - radius*radius
-    discriminant = b*b - 4*a*c
-    if discriminant < 0:
-        return -1.0
+def color(ray, world):
+    hit_rec = {}
+    if world.hit(ray, 0.0, float('inf'), hit_rec):
+        return 0.5 * Vec(hit_rec['n'].x + 1, hit_rec['n'].y+1, hit_rec['n'].z+1)
     else:
-        return (-b - sqrt(discriminant)) / (2.0 * a)
+        unit_dir = Vec.unit_vector(ray.direction())
+        t = 0.5 * (unit_dir.y + 1.0)
+        return (1.0 - t) * Vec(1.0, 1.0, 1.0) + t * Vec(0.5, 0.7, 1.0)
 
-def color(ray):
-    t = hit_sphere(Vec(0, 0, -1), 0.5, ray)
-    if t > 0.0:
-        N = Vec.unit_vector(Vec.from_vec(ray.point_at_paramater(t) - Vec(0, 0, -1)))
-        return 0.5 * Vec(N.x + 1, N.y + 1, N.z + 1)
-    unit_dir = Vec.unit_vector(ray.direction())
-    t = 0.5 * (unit_dir.y + 1.0)
-    return (1.0 - t) * Vec(1.0, 1.0, 1.0) + t * Vec(0.5, 0.7, 1.0)
-
-def make_gradiant(width=200, height=100):
+def make_image(world, width=200, height=100):
     lower_left = Vec(-2, -1, -1)
     horizontal = Vec(4, 0, 0)
     vertical = Vec(0, 2, 0)
@@ -75,15 +90,18 @@ def make_gradiant(width=200, height=100):
             u = i / width
             v = j / height
             ray = Ray(origin, lower_left + u*horizontal + v*vertical)
-            col = color(ray)
-            row.append(col.x * 255.0)
-            row.append(col.y * 255.0)
-            row.append(col.z * 255.0)
+            col = color(ray, world)
+            row.append(col.x * 255.99)
+            row.append(col.y * 255.99)
+            row.append(col.z * 255.99)
         p.append(row)
     return p
 
 def main():
-    write_image(make_gradiant())
+    spheres = HitableList()
+    spheres.append(Sphere(Vec(0, 0, -1), 0.5))
+    spheres.append(Sphere(Vec(0, -100.5, -1), 100))
+    write_image(make_image(spheres))
 
 if __name__ == '__main__':
     main()
