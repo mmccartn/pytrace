@@ -42,7 +42,17 @@ def test_png_2(width=200, height=100):
     w.write(f, p)
     f.close()
 
+def hit_sphere(center, radius, ray):
+    oc = ray.origin() - center
+    a = Vec.dot(ray.direction(), ray.direction())
+    b = 2.0 * Vec.dot(oc, ray.direction())
+    c = Vec.dot(oc, oc) - radius*radius
+    discriminant = b*b - 4*a*c
+    return discriminant > 0
+
 def color(ray):
+    if hit_sphere(Vec(0, 0, -1), 0.5, ray):
+        return Vec(1, 0, 0)
     unit_dir = Vec.unit_vector(ray.direction())
     t = 0.5 * (unit_dir.y + 1.0)
     return (1.0 - t) * Vec(1.0, 1.0, 1.0) + t * Vec(0.5, 0.7, 1.0)

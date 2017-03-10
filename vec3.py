@@ -36,7 +36,7 @@ class Vec(object):
     def __add__(self, v):
         return Vec(self.x + v.x, self.y + v.y, self.z + v.z)
 
-    def __neg__(self, v):
+    def __neg__(self):
         return Vec(-self.x, -self.y, -self.z)
 
     def __sub__(self, v):
