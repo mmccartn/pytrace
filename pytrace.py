@@ -1,6 +1,7 @@
 import png
 from vec3 import Vec
 from math import sqrt
+from time import time
 from random import random
 
 class Sphere (object):
@@ -75,7 +76,7 @@ class Camera (object):
     def get_ray(self, u, v):
         return Ray(self.origin, self.lower_left + u*self.horizontal + v*self.vertical - self.origin)
 
-def write_image(p, name='swatch.png', w=200, h=100):
+def write_image(p, w=200, h=100, name='swatch.png'):
     f = open(name, 'wb') # Taken from: http://pythonhosted.org/pypng/ex.html#colour
     w = png.Writer(w, h) # http://pythonhosted.org/pypng/png.html#png.Writer
     w.write(f, p)
@@ -90,7 +91,7 @@ def color(ray, world):
         t = 0.5 * (unit_dir.y + 1.0)
         return (1.0 - t) * Vec(1.0, 1.0, 1.0) + t * Vec(0.5, 0.7, 1.0)
 
-def make_image(world, width=200, height=100, samples=100):
+def make_image(world, width=200, height=100, samples=10):
     lower_left = Vec(-2, -1, -1)
     horizontal = Vec(4, 0, 0)
     vertical = Vec(0, 2, 0)
@@ -114,10 +115,15 @@ def make_image(world, width=200, height=100, samples=100):
     return p
 
 def main():
+    w = 200
+    h = 100
+    s = 10
+    start_time = time()
     spheres = HitableList()
     spheres.append(Sphere(Vec(0, 0, -1), 0.5))
     spheres.append(Sphere(Vec(0, -100.5, -1), 100))
-    write_image(make_image(spheres))
+    write_image(make_image(spheres, w, h, s), w, h)
+    print('Took %.2f seconds to process %d rays' % (time() - start_time, w*h*s))
 
 if __name__ == '__main__':
     main()
