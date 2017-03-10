@@ -51,4 +51,4 @@ class Vec(object):
             return Vec(self.x / v, self.y / v, self.z / v)
 
     def __str__(self):
-        return '{0} {1} {2}'.format(self.x, self.y, self.z)
+        return '({x},{y},{z})'.format(x=self.x, y=self.y, z=self.z)

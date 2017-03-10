@@ -1,33 +1,25 @@
 import png
 from vec3 import Vec
-#
-# class PPM (object):
-#
-#     def __init__(self, name, num_rows, num_cols, max_val=255, magic_number=6):
-#         self.name = name
-#         self.max_val = max_val
-#         self.num_rows = num_rows
-#         self.num_cols = num_cols
-#         self.magic_number = 'P' + magic_number
-#         self.rows = []
-#         self.rows.append([])
-#         self.current_row_index = 0
-#
-#     def append_pixel(self, pixel):
-#         if len(self.rows) >= self.num_cols:
-#             self.rows.append([])
-#             self.current_row_index += 1
-#         self.rows[self.current_row_index].append(pixel)
-#
-#     def __str__(self):
-#         for row in self.rows:
-#             [str(p) for p in row].join('    ')
-#             for pixel in row:
-#                 pass
 
+class Ray (object):
 
-def test_png():
-    # Taken from: http://pythonhosted.org/pypng/ex.html#colour
+    def __init__(self, a, b):
+        self.A = a
+        self.B = b
+
+    def origin(self):
+        return self.A
+
+    def direction(self):
+        return self.B
+
+    def point_at_paramater(self, t):
+        return self.A + t*self.B
+
+    def __str__(self):
+        return 'p(t) = {A} + t*{B}'.format(A=self.A, B=self.B)
+
+def test_png(): # Taken from: http://pythonhosted.org/pypng/ex.html#colour
     p = [(255, 0, 0, 0, 255, 0, 0, 0, 255),
          (128, 0, 0, 0, 128, 0, 0, 0, 128)]
     f = open('swatch.png', 'wb')
@@ -52,9 +44,11 @@ def test_png_2(width=200, height=100):
     w.write(f, p)
     f.close()
 
+def test_ray():
+    print(Ray(Vec(1, 2, 3), Vec(4, 5, 6)))
 
 def main():
-    test_png_2()
+    test_ray()
 
 if __name__ == '__main__':
     main()
