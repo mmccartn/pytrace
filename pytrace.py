@@ -19,11 +19,9 @@ class Ray (object):
     def __str__(self):
         return 'p(t) = {A} + t*{B}'.format(A=self.A, B=self.B)
 
-def test_png(): # Taken from: http://pythonhosted.org/pypng/ex.html#colour
-    p = [(255, 0, 0, 0, 255, 0, 0, 0, 255),
-         (128, 0, 0, 0, 128, 0, 0, 0, 128)]
-    f = open('swatch.png', 'wb')
-    w = png.Writer(3, 2)  # http://pythonhosted.org/pypng/png.html#png.Writer
+def write_image(p, name='swatch.png', w=200, h=100):
+    f = open(name, 'wb') # Taken from: http://pythonhosted.org/pypng/ex.html#colour
+    w = png.Writer(w, h) # http://pythonhosted.org/pypng/png.html#png.Writer
     w.write(f, p)
     f.close()
 
@@ -44,11 +42,32 @@ def test_png_2(width=200, height=100):
     w.write(f, p)
     f.close()
 
-def test_ray():
-    print(Ray(Vec(1, 2, 3), Vec(4, 5, 6)))
+def color(ray):
+    unit_dir = Vec.unit_vector(ray.direction())
+    t = 0.5 * (unit_dir.y + 1.0)
+    return (1.0 - t) * Vec(1.0, 1.0, 1.0) + t * Vec(0.5, 0.7, 1.0)
+
+def make_gradiant(width=200, height=100):
+    lower_left = Vec(-2, -1, -1)
+    horizontal = Vec(4, 0, 0)
+    vertical = Vec(0, 2, 0)
+    origin = Vec(0, 0, 0)
+    p = []
+    for j in reversed(range(height)):
+        row = []
+        for i in range(width):
+            u = i / width
+            v = j / height
+            ray = Ray(origin, lower_left + u*horizontal + v*vertical)
+            col = color(ray)
+            row.append(col.x * 255.0)
+            row.append(col.y * 255.0)
+            row.append(col.z * 255.0)
+        p.append(row)
+    return p
 
 def main():
-    test_ray()
+    write_image(make_gradiant())
 
 if __name__ == '__main__':
     main()

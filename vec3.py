@@ -23,8 +23,15 @@ class Vec(object):
     def normalize(v):
         return v / v.norm()
 
+    @staticmethod
+    def unit_vector(v):
+        return Vec.normalize(v)
+
     def norm(self):
         return math.sqrt(Vec.dot(self, self))
+
+    def length(self):
+        return self.norm()
 
     def __add__(self, v):
         return Vec(self.x + v.x, self.y + v.y, self.z + v.z)
@@ -49,6 +56,12 @@ class Vec(object):
             return Vec(self.x / v.x, self.y / v.y, self.z / v.z)
         else:
             return Vec(self.x / v, self.y / v, self.z / v)
+
+    def __truediv__(self, v):
+        return self.__div__(v)
+
+    def __floordiv__(self, v):
+        return self.__div__(v)
 
     def __str__(self):
         return '({x},{y},{z})'.format(x=self.x, y=self.y, z=self.z)
