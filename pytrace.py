@@ -1,6 +1,7 @@
 import png
 from vec3 import Vec
 from math import sqrt
+from random import random
 
 class Sphere (object):
 
@@ -63,6 +64,17 @@ class Ray (object):
     def __str__(self):
         return 'p(t) = {A} + t*{B}'.format(A=self.A, B=self.B)
 
+class Camera (object):
+
+    def __init__(self, ):
+        self.lower_left = Vec(-2.0, -1.0, -1.0)
+        self.horizontal = Vec(4.0, 0.0, 0.0)
+        self.vertical = Vec(0.0, 2.0, 0.0)
+        self.origin = Vec(0, 0, 0.0)
+
+    def get_ray(self, u, v):
+        return Ray(self.origin, self.lower_left + u*self.horizontal + v*self.vertical - self.origin)
+
 def write_image(p, name='swatch.png', w=200, h=100):
     f = open(name, 'wb') # Taken from: http://pythonhosted.org/pypng/ex.html#colour
     w = png.Writer(w, h) # http://pythonhosted.org/pypng/png.html#png.Writer
@@ -78,19 +90,23 @@ def color(ray, world):
         t = 0.5 * (unit_dir.y + 1.0)
         return (1.0 - t) * Vec(1.0, 1.0, 1.0) + t * Vec(0.5, 0.7, 1.0)
 
-def make_image(world, width=200, height=100):
+def make_image(world, width=200, height=100, samples=100):
     lower_left = Vec(-2, -1, -1)
     horizontal = Vec(4, 0, 0)
     vertical = Vec(0, 2, 0)
     origin = Vec(0, 0, 0)
+    cam = Camera()
     p = []
     for j in reversed(range(height)):
         row = []
         for i in range(width):
-            u = i / width
-            v = j / height
-            ray = Ray(origin, lower_left + u*horizontal + v*vertical)
-            col = color(ray, world)
+            col = Vec(0, 0, 0)
+            for s in range(samples):
+                u = (i + random()) / width
+                v = (j + random()) / height
+                ray = cam.get_ray(u, v)
+                col += color(ray, world)
+            col /= samples
             row.append(col.x * 255.99)
             row.append(col.y * 255.99)
             row.append(col.z * 255.99)
