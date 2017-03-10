@@ -1,5 +1,6 @@
 import png
 from vec3 import Vec
+from math import sqrt
 
 class Ray (object):
 
@@ -48,11 +49,16 @@ def hit_sphere(center, radius, ray):
     b = 2.0 * Vec.dot(oc, ray.direction())
     c = Vec.dot(oc, oc) - radius*radius
     discriminant = b*b - 4*a*c
-    return discriminant > 0
+    if discriminant < 0:
+        return -1.0
+    else:
+        return (-b - sqrt(discriminant)) / (2.0 * a)
 
 def color(ray):
-    if hit_sphere(Vec(0, 0, -1), 0.5, ray):
-        return Vec(1, 0, 0)
+    t = hit_sphere(Vec(0, 0, -1), 0.5, ray)
+    if t > 0.0:
+        N = Vec.unit_vector(Vec.from_vec(ray.point_at_paramater(t) - Vec(0, 0, -1)))
+        return 0.5 * Vec(N.x + 1, N.y + 1, N.z + 1)
     unit_dir = Vec.unit_vector(ray.direction())
     t = 0.5 * (unit_dir.y + 1.0)
     return (1.0 - t) * Vec(1.0, 1.0, 1.0) + t * Vec(0.5, 0.7, 1.0)

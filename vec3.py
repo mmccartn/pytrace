@@ -1,5 +1,4 @@
-import math
-
+from math import sqrt
 
 class Vec(object):
 
@@ -7,6 +6,10 @@ class Vec(object):
         self.x = x
         self.y = y
         self.z = z
+
+    @staticmethod
+    def from_vec(v):
+        return Vec(v.x, v.y, v.z)
 
     @staticmethod
     def dot(v1, v2):
@@ -28,7 +31,7 @@ class Vec(object):
         return Vec.normalize(v)
 
     def norm(self):
-        return math.sqrt(Vec.dot(self, self))
+        return sqrt(Vec.dot(self, self))
 
     def length(self):
         return self.norm()
