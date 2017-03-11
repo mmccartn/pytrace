@@ -4,59 +4,8 @@ from math import sqrt
 from time import time
 from sys import stdout
 from random import random
+from hittables import HitableList, Sphere
 from multiprocessing import Process, Queue, freeze_support
-
-class Sphere (object):
-
-    def __init__(self, center, radius):
-        self.center = center
-        self.radius = radius
-
-    def hit(self, ray, tmin, tmax, hit_rec):
-        oc = ray.origin() - self.center
-        a = Vec.dot(ray.direction(), ray.direction())
-        b = Vec.dot(oc, ray.direction())
-        c = Vec.dot(oc, oc) - self.radius*self.radius
-        discriminant = b*b - a*c
-        if discriminant > 0:
-            temp = (-b - sqrt(b*b-a*c))/a
-            if temp < tmax and temp > tmin:
-                hit_rec['t'] = temp
-                hit_rec['p'] = ray.point_at_paramater(hit_rec['t'])
-                hit_rec['n'] = (hit_rec['p'] - self.center) / self.radius
-                return True
-            temp = (-b + sqrt(b*b-a*c))/a
-            if temp < tmax and temp > tmin:
-                hit_rec['t'] = temp
-                hit_rec['p'] = ray.point_at_paramater(hit_rec['t'])
-                hit_rec['n'] = (hit_rec['p'] - self.center) / self.radius
-                return True
-        return False
-
-    @staticmethod
-    def random_in_unit_sphere():
-        p = Vec(0, 0, 0)
-        while True:
-            p = 2.0 * Vec(random(), random(), random()) - Vec(1, 1, 1)
-            if p.squared_length() < 1.0:
-                break
-        return p
-
-class HitableList (list):
-
-    def hit(self, ray, tmin, tmax, hit_rec):
-        temp_rec = {}
-        has_hit = False
-        closest = tmax
-        for i in range(len(self)):
-            if self[i].hit(ray, tmin, closest, temp_rec):
-                has_hit = True
-                closest = temp_rec['t']
-                hit_rec['t'] = temp_rec['t']
-                hit_rec['p'] = temp_rec['p']
-                hit_rec['n'] = temp_rec['n']
-        return has_hit
-
 
 class Ray (object):
 
@@ -79,15 +28,15 @@ class Ray (object):
 class Camera (object):
 
     def __init__(self, ):
-        self.lower_left = Vec(-2.0, -1.0, -1.0)
-        self.horizontal = Vec(4.0, 0.0, 0.0)
+        self.lower_left = Vec(-1.0, -1.0, -1.0)
+        self.horizontal = Vec(2.0, 0.0, 0.0)
         self.vertical = Vec(0.0, 2.0, 0.0)
         self.origin = Vec(0, 0, 0.0)
 
     def get_ray(self, u, v):
         return Ray(self.origin, self.lower_left + u*self.horizontal + v*self.vertical - self.origin)
 
-def write_image(p, w=200, h=100, name='swatch.png'):
+def write_image(p, w, h, name='balls.png'):
     f = open(name, 'wb') # Taken from: http://pythonhosted.org/pypng/ex.html#colour
     w = png.Writer(w, h) # http://pythonhosted.org/pypng/png.html#png.Writer
     w.write(f, p)
@@ -103,45 +52,37 @@ def color(ray, world):
         t = 0.5 * (unit_dir.y + 1.0)
         return (1.0 - t) * Vec(1.0, 1.0, 1.0) + t * Vec(0.5, 0.7, 1.0)
 
-def worker(input, output):
+def worker(input, output, state):
     for inp in iter(input.get, 'STOP'):
         col = Vec(0, 0, 0)
-        for s in range(inp['samples']):
-            u = (inp['i'] + random()) / inp['width']
-            v = (inp['j'] + random()) / inp['height']
-            ray = inp['cam'].get_ray(u, v)
-            col += color(ray, inp['world'])
-        col /= inp['samples']
+        for s in range(state['samples']):
+            u = (inp['i'] + random()) / state['width']
+            v = (inp['j'] + random()) / state['height']
+            ray = state['cam'].get_ray(u, v)
+            col += color(ray, state['world'])
+        col /= state['samples']
         col = Vec(sqrt(col.x), sqrt(col.y), sqrt(col.z))
         col.x *= 255.99
         col.y *= 255.99
         col.z *= 255.99
         output.put({'index': inp['index'], 'color': col})
 
-def make_image(world, width=200, height=100, samples=10):
+def make_image(world, width, height, samples):
     task_queue = Queue()
     done_queue = Queue()
 
-    lower_left = Vec(-2, -1, -1)
-    horizontal = Vec(4, 0, 0)
-    vertical = Vec(0, 2, 0)
-    origin = Vec(0, 0, 0)
-    cam = Camera()
+    state = {
+        'samples': samples,
+        'width': width,
+        'height': height,
+        'cam': Camera(),
+        'world': world
+    }
+
     index = 0
     for j in reversed(range(height)):
-        row = []
         for i in range(width):
-
-            task_queue.put({
-                'samples': samples,
-                'i': i,
-                'j': j,
-                'width': width,
-                'height': height,
-                'cam': cam,
-                'world': world,
-                'index': index
-            })
+            task_queue.put({'i': i, 'j': j, 'index': index})
             index += 1
 
     print('All tasks logged.')
@@ -149,7 +90,7 @@ def make_image(world, width=200, height=100, samples=10):
 
     NUMBER_OF_PROCESSES = 8
     for proc in range(NUMBER_OF_PROCESSES):
-        Process(target=worker, args=(task_queue, done_queue)).start()
+        Process(target=worker, args=(task_queue, done_queue, state)).start()
 
     print('All tasks started.', index)
     stdout.flush()
@@ -185,9 +126,9 @@ def make_image(world, width=200, height=100, samples=10):
     return p
 
 def main():
-    w = 200
-    h = 100
-    s = 10
+    w = 256
+    h = 256
+    s = 2
     start_time = time()
     spheres = HitableList()
     spheres.append(Sphere(Vec(0, 0, -1), 0.5))
