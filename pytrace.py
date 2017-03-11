@@ -2,7 +2,9 @@ import png
 from vec3 import Vec
 from math import sqrt
 from time import time
+from sys import stdout
 from random import random
+from multiprocessing import Process, Queue, freeze_support
 
 class Sphere (object):
 
@@ -91,33 +93,90 @@ def color(ray, world):
         t = 0.5 * (unit_dir.y + 1.0)
         return (1.0 - t) * Vec(1.0, 1.0, 1.0) + t * Vec(0.5, 0.7, 1.0)
 
+def worker(input, output):
+    for inp in iter(input.get, 'STOP'):
+        col = Vec(0, 0, 0)
+        for s in range(inp['samples']):
+            u = (inp['i'] + random()) / inp['width']
+            v = (inp['j'] + random()) / inp['height']
+            ray = inp['cam'].get_ray(u, v)
+            col += color(ray, inp['world'])
+        col /= inp['samples']
+        col.x *= 255.99
+        col.y *= 255.99
+        col.z *= 255.99
+        output.put({'index': inp['index'], 'color': col})
+
 def make_image(world, width=200, height=100, samples=10):
+    task_queue = Queue()
+    done_queue = Queue()
+
     lower_left = Vec(-2, -1, -1)
     horizontal = Vec(4, 0, 0)
     vertical = Vec(0, 2, 0)
     origin = Vec(0, 0, 0)
     cam = Camera()
-    p = []
+    index = 0
     for j in reversed(range(height)):
         row = []
         for i in range(width):
-            col = Vec(0, 0, 0)
-            for s in range(samples):
-                u = (i + random()) / width
-                v = (j + random()) / height
-                ray = cam.get_ray(u, v)
-                col += color(ray, world)
-            col /= samples
-            row.append(col.x * 255.99)
-            row.append(col.y * 255.99)
-            row.append(col.z * 255.99)
+
+            task_queue.put({
+                'samples': samples,
+                'i': i,
+                'j': j,
+                'width': width,
+                'height': height,
+                'cam': cam,
+                'world': world,
+                'index': index
+            })
+            index += 1
+
+    print('All tasks logged.')
+    stdout.flush()
+
+    NUMBER_OF_PROCESSES = 8
+    for proc in range(NUMBER_OF_PROCESSES):
+        Process(target=worker, args=(task_queue, done_queue)).start()
+
+    print('All tasks started.', index)
+    stdout.flush()
+
+    results = []
+    for i in range(index):
+        stdout.flush()
+        results.append(done_queue.get())
+
+    print('All tasks done.')
+    stdout.flush()
+
+    for proc in range(NUMBER_OF_PROCESSES):
+        task_queue.put('STOP')
+
+    print('All tasks stopped.')
+    stdout.flush()
+
+    p = []
+    index = 0
+    results.sort(key=lambda x: x['index'], reverse=False)
+    print('All tasks sorted.')
+    for j in range(height):
+        row = []
+        for i in range(width):
+            col = results[index]['color']
+            row.append(col.x)
+            row.append(col.y)
+            row.append(col.z)
+            index += 1
         p.append(row)
+
     return p
 
 def main():
-    w = 200
-    h = 100
-    s = 10
+    w = 1920
+    h = 1080
+    s = 100
     start_time = time()
     spheres = HitableList()
     spheres.append(Sphere(Vec(0, 0, -1), 0.5))
@@ -126,4 +185,5 @@ def main():
     print('Took %.2f seconds to process %d rays' % (time() - start_time, w*h*s))
 
 if __name__ == '__main__':
+    freeze_support()
     main()
