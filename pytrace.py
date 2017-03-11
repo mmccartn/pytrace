@@ -6,7 +6,7 @@ from sys import stdout
 from random import random
 from progressbar import ProgressBar
 from hittables import HitableList, Sphere
-from multiprocessing import Process, Queue, freeze_support
+from multiprocessing import Process, Queue, freeze_support, cpu_count
 
 class Ray (object):
 
@@ -87,12 +87,10 @@ def make_image(world, width, height, samples):
             task_queue.put({'i': i, 'j': j, 'index': index})
             index += 1
 
-    NUMBER_OF_PROCESSES = 4
-
-    print('Starting {0} tasks in {1} processes.'.format(width*height, NUMBER_OF_PROCESSES))
+    print('Starting {0} tasks in {1} processes.'.format(width*height, cpu_count()))
     stdout.flush()
 
-    for proc in range(NUMBER_OF_PROCESSES):
+    for proc in range(cpu_count()):
         Process(target=worker, args=(task_queue, done_queue, state)).start()
 
     results = []
@@ -102,7 +100,7 @@ def make_image(world, width, height, samples):
         results.append(done_queue.get())
     bar.finish()
 
-    for proc in range(NUMBER_OF_PROCESSES):
+    for proc in range(cpu_count()):
         task_queue.put('STOP')
 
     print('Sorting.')
