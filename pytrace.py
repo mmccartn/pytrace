@@ -4,6 +4,7 @@ from math import sqrt
 from time import time
 from sys import stdout
 from random import random
+from progressbar import ProgressBar
 from hittables import HitableList, Sphere
 from multiprocessing import Process, Queue, freeze_support
 
@@ -27,9 +28,9 @@ class Ray (object):
 
 class Camera (object):
 
-    def __init__(self, ):
-        self.lower_left = Vec(-1.0, -1.0, -1.0)
-        self.horizontal = Vec(2.0, 0.0, 0.0)
+    def __init__(self, r=1.6):
+        self.lower_left = Vec(-1.0 * r, -1.0, -1.0)
+        self.horizontal = Vec(2.0 * r, 0.0, 0.0)
         self.vertical = Vec(0.0, 2.0, 0.0)
         self.origin = Vec(0, 0, 0.0)
 
@@ -37,6 +38,7 @@ class Camera (object):
         return Ray(self.origin, self.lower_left + u*self.horizontal + v*self.vertical - self.origin)
 
 def write_image(p, w, h, name='balls.png'):
+    print('Writing out to file: {0}'.format(name))
     f = open(name, 'wb') # Taken from: http://pythonhosted.org/pypng/ex.html#colour
     w = png.Writer(w, h) # http://pythonhosted.org/pypng/png.html#png.Writer
     w.write(f, p)
@@ -85,34 +87,30 @@ def make_image(world, width, height, samples):
             task_queue.put({'i': i, 'j': j, 'index': index})
             index += 1
 
-    print('All tasks logged.')
+    NUMBER_OF_PROCESSES = 4
+
+    print('Starting {0} tasks in {1} processes.'.format(width*height, NUMBER_OF_PROCESSES))
     stdout.flush()
 
-    NUMBER_OF_PROCESSES = 4
     for proc in range(NUMBER_OF_PROCESSES):
         Process(target=worker, args=(task_queue, done_queue, state)).start()
 
-    print('All tasks started.', index)
-    stdout.flush()
-
     results = []
+    bar = ProgressBar(redirect_stdout=True, max_value=width*height)
     for i in range(index):
-        stdout.flush()
+        bar.update(i)
         results.append(done_queue.get())
-
-    print('All tasks done.')
-    stdout.flush()
+    bar.finish()
 
     for proc in range(NUMBER_OF_PROCESSES):
         task_queue.put('STOP')
 
-    print('All tasks stopped.')
+    print('Sorting.')
     stdout.flush()
 
     p = []
     index = 0
     results.sort(key=lambda x: x['index'], reverse=False)
-    print('All tasks sorted.')
     for j in range(height):
         row = []
         for i in range(width):
@@ -126,9 +124,9 @@ def make_image(world, width, height, samples):
     return p
 
 def main():
-    w = 1080
-    h = 1080
-    s = 1
+    w = 192
+    h = 120
+    s = 8
     start_time = time()
     spheres = HitableList()
     spheres.append(Sphere(Vec(0, 0, -1), 0.5))
