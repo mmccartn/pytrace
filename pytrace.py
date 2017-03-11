@@ -88,7 +88,7 @@ def make_image(world, width, height, samples):
     print('All tasks logged.')
     stdout.flush()
 
-    NUMBER_OF_PROCESSES = 8
+    NUMBER_OF_PROCESSES = 4
     for proc in range(NUMBER_OF_PROCESSES):
         Process(target=worker, args=(task_queue, done_queue, state)).start()
 
@@ -126,9 +126,9 @@ def make_image(world, width, height, samples):
     return p
 
 def main():
-    w = 256
-    h = 256
-    s = 2
+    w = 1080
+    h = 1080
+    s = 1
     start_time = time()
     spheres = HitableList()
     spheres.append(Sphere(Vec(0, 0, -1), 0.5))
