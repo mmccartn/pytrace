@@ -33,6 +33,15 @@ class Sphere (object):
                 return True
         return False
 
+    @staticmethod
+    def random_in_unit_sphere():
+        p = Vec(0, 0, 0)
+        while True:
+            p = 2.0 * Vec(random(), random(), random()) - Vec(1, 1, 1)
+            if p.squared_length() < 1.0:
+                break
+        return p
+
 class HitableList (list):
 
     def hit(self, ray, tmin, tmax, hit_rec):
@@ -86,8 +95,9 @@ def write_image(p, w=200, h=100, name='swatch.png'):
 
 def color(ray, world):
     hit_rec = {}
-    if world.hit(ray, 0.0, float('inf'), hit_rec):
-        return 0.5 * Vec(hit_rec['n'].x + 1, hit_rec['n'].y+1, hit_rec['n'].z+1)
+    if world.hit(ray, 0.001, float('inf'), hit_rec):
+        target = hit_rec['p'] + hit_rec['n'] + Sphere.random_in_unit_sphere()
+        return 0.5 * color(Ray(hit_rec['p'], target-hit_rec['p']), world)
     else:
         unit_dir = Vec.unit_vector(ray.direction())
         t = 0.5 * (unit_dir.y + 1.0)
@@ -102,6 +112,7 @@ def worker(input, output):
             ray = inp['cam'].get_ray(u, v)
             col += color(ray, inp['world'])
         col /= inp['samples']
+        col = Vec(sqrt(col.x), sqrt(col.y), sqrt(col.z))
         col.x *= 255.99
         col.y *= 255.99
         col.z *= 255.99
@@ -174,9 +185,9 @@ def make_image(world, width=200, height=100, samples=10):
     return p
 
 def main():
-    w = 1920
-    h = 1080
-    s = 100
+    w = 200
+    h = 100
+    s = 10
     start_time = time()
     spheres = HitableList()
     spheres.append(Sphere(Vec(0, 0, -1), 0.5))

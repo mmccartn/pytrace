@@ -33,6 +33,9 @@ class Vec(object):
     def norm(self):
         return sqrt(Vec.dot(self, self))
 
+    def squared_length(self):
+        return Vec.dot(self, self)
+
     def length(self):
         return self.norm()
 
