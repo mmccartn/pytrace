@@ -1,30 +1,14 @@
 import png
+from ray import Ray
 from vec3 import Vec
 from math import sqrt
 from time import time
 from sys import stdout
 from random import random
 from progressbar import ProgressBar
+from materials import Lambertian, Metal
 from hittables import HitableList, Sphere
 from multiprocessing import Process, Queue, freeze_support, cpu_count
-
-class Ray (object):
-
-    def __init__(self, a, b):
-        self.A = a
-        self.B = b
-
-    def origin(self):
-        return self.A
-
-    def direction(self):
-        return self.B
-
-    def point_at_paramater(self, t):
-        return self.A + t*self.B
-
-    def __str__(self):
-        return 'p(t) = {A} + t*{B}'.format(A=self.A, B=self.B)
 
 class Camera (object):
 
@@ -44,11 +28,15 @@ def write_image(p, w, h, name='balls.png'):
     w.write(f, p)
     f.close()
 
-def color(ray, world):
+def color(ray, world, depth):
     hit_rec = {}
     if world.hit(ray, 0.001, float('inf'), hit_rec):
-        target = hit_rec['p'] + hit_rec['n'] + Sphere.random_in_unit_sphere()
-        return 0.5 * color(Ray(hit_rec['p'], target-hit_rec['p']), world)
+        scattered = Ray()
+        attenuation = Vec()
+        if depth < 50 and hit_rec['mat'].scatter(ray, hit_rec, attenuation, scattered):
+            return attenuation * color(scattered, world, depth + 1)
+        else:
+            return Vec(0, 0, 0)
     else:
         unit_dir = Vec.unit_vector(ray.direction())
         t = 0.5 * (unit_dir.y + 1.0)
@@ -61,7 +49,7 @@ def worker(input, output, state):
             u = (inp['i'] + random()) / state['width']
             v = (inp['j'] + random()) / state['height']
             ray = state['cam'].get_ray(u, v)
-            col += color(ray, state['world'])
+            col += color(ray, state['world'], 0)
         col /= state['samples']
         col = Vec(sqrt(col.x), sqrt(col.y), sqrt(col.z))
         col.x *= 255.99
@@ -127,8 +115,10 @@ def main():
     s = 8
     start_time = time()
     spheres = HitableList()
-    spheres.append(Sphere(Vec(0, 0, -1), 0.5))
-    spheres.append(Sphere(Vec(0, -100.5, -1), 100))
+    spheres.append(Sphere(Vec(0, 0, -1), 0.5, Lambertian(Vec(0.8, 0.3, 0.3))))
+    spheres.append(Sphere(Vec(0, -100.5, -1), 100, Lambertian(Vec(0.8, 0.8, 0.0))))
+    spheres.append(Sphere(Vec(1, 0, -1), 0.5, Metal(Vec(0.8, 0.6, 0.2))))
+    spheres.append(Sphere(Vec(-1, 0, -1), 0.5, Metal(Vec(0.8, 0.8, 0.8))))
     write_image(make_image(spheres, w, h, s), w, h)
     print('Took %.2f seconds to process %d rays' % (time() - start_time, w*h*s))
 

@@ -2,7 +2,7 @@ from math import sqrt
 
 class Vec(object):
 
-    def __init__(self, x, y, z):
+    def __init__(self, x=0, y=0, z=0):
         self.x = x
         self.y = y
         self.z = z
@@ -29,6 +29,10 @@ class Vec(object):
     @staticmethod
     def unit_vector(v):
         return Vec.normalize(v)
+
+    @staticmethod
+    def reflect(v, n):
+        return v - 2 * Vec.dot(v, n) * n
 
     def norm(self):
         return sqrt(Vec.dot(self, self))

@@ -4,9 +4,10 @@ from random import random
 
 class Sphere (object):
 
-    def __init__(self, center, radius):
+    def __init__(self, center, radius, material):
         self.center = center
         self.radius = radius
+        self.material = material
 
     def hit(self, ray, tmin, tmax, hit_rec):
         oc = ray.origin() - self.center
@@ -20,12 +21,14 @@ class Sphere (object):
                 hit_rec['t'] = temp
                 hit_rec['p'] = ray.point_at_paramater(hit_rec['t'])
                 hit_rec['n'] = (hit_rec['p'] - self.center) / self.radius
+                hit_rec['mat'] = self.material
                 return True
-            temp = (-b + sqrt(b*b-a*c))/a
+            temp = (-b + sqrt(b * b - a * c)) / a
             if temp < tmax and temp > tmin:
                 hit_rec['t'] = temp
                 hit_rec['p'] = ray.point_at_paramater(hit_rec['t'])
                 hit_rec['n'] = (hit_rec['p'] - self.center) / self.radius
+                hit_rec['mat'] = self.material
                 return True
         return False
 
@@ -51,6 +54,7 @@ class HitableList (list):
                 hit_rec['t'] = temp_rec['t']
                 hit_rec['p'] = temp_rec['p']
                 hit_rec['n'] = temp_rec['n']
+                hit_rec['mat'] = temp_rec['mat']
         return has_hit
 
 if __name__ == '__main__':
