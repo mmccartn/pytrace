@@ -20,10 +20,14 @@ class Lambertian (Material):
 
 class Metal (Material):
 
+    def __init__(self, albedo, fuzz=1):
+        super().__init__(albedo)
+        self.fuzz = min(fuzz, 1)
+
     def scatter(self, r_in, hit_rec, attenuation, r_scattered):
         reflected = Vec.reflect(Vec.unit_vector(r_in.direction()), hit_rec['n'])
         r_scattered.A = hit_rec['p']
-        r_scattered.B = reflected
+        r_scattered.B = reflected + self.fuzz * Sphere.random_in_unit_sphere()
         attenuation.x = self.albedo.x
         attenuation.y = self.albedo.y
         attenuation.z = self.albedo.z

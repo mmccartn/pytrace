@@ -112,13 +112,13 @@ def make_image(world, width, height, samples):
 def main():
     w = 192
     h = 120
-    s = 8
+    s = 16
     start_time = time()
     spheres = HitableList()
-    spheres.append(Sphere(Vec(0, 0, -1), 0.5, Lambertian(Vec(0.8, 0.3, 0.3))))
-    spheres.append(Sphere(Vec(0, -100.5, -1), 100, Lambertian(Vec(0.8, 0.8, 0.0))))
-    spheres.append(Sphere(Vec(1, 0, -1), 0.5, Metal(Vec(0.8, 0.6, 0.2))))
-    spheres.append(Sphere(Vec(-1, 0, -1), 0.5, Metal(Vec(0.8, 0.8, 0.8))))
+    spheres.append(Sphere(Vec(0, 0, -1), 0.5, Lambertian(Vec(0.8, 0.3, 0.3)))) # Center
+    spheres.append(Sphere(Vec(0, -100.5, -1), 100, Lambertian(Vec(0.8, 0.8, 0.0)))) # Base
+    spheres.append(Sphere(Vec(1, 0, -1), 0.5, Metal(Vec(0.8, 0.6, 0.2)))) # Right
+    spheres.append(Sphere(Vec(-1, 0, -1), 0.5, Metal(Vec(0.8, 0.8, 0.8), 0))) # Left
     write_image(make_image(spheres, w, h, s), w, h)
     print('Took %.2f seconds to process %d rays' % (time() - start_time, w*h*s))
 
