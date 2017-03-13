@@ -7,6 +7,16 @@ class Vec(object):
         self.y = y
         self.z = z
 
+    def copy(self, v):
+        self.x = v.x
+        self.y = v.y
+        self.z = v.z
+
+    def set(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
+
     @staticmethod
     def from_vec(v):
         return Vec(v.x, v.y, v.z)

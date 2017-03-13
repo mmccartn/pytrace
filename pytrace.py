@@ -6,8 +6,8 @@ from time import time
 from sys import stdout
 from random import random
 from progressbar import ProgressBar
-from materials import Lambertian, Metal
 from hittables import HitableList, Sphere
+from materials import Lambertian, Metal, Dialectric
 from multiprocessing import Process, Queue, freeze_support, cpu_count
 
 class Camera (object):
@@ -16,7 +16,7 @@ class Camera (object):
         self.lower_left = Vec(-1.0 * r, -1.0, -1.0)
         self.horizontal = Vec(2.0 * r, 0.0, 0.0)
         self.vertical = Vec(0.0, 2.0, 0.0)
-        self.origin = Vec(0, 0, 0.0)
+        self.origin = Vec(0, 0, 0) # 0, .25, 4
 
     def get_ray(self, u, v):
         return Ray(self.origin, self.lower_left + u*self.horizontal + v*self.vertical - self.origin)
@@ -51,10 +51,9 @@ def worker(input, output, state):
             ray = state['cam'].get_ray(u, v)
             col += color(ray, state['world'], 0)
         col /= state['samples']
-        col = Vec(sqrt(col.x), sqrt(col.y), sqrt(col.z))
-        col.x *= 255.99
-        col.y *= 255.99
-        col.z *= 255.99
+        col.x = sqrt(col.x) * 255.99
+        col.y = sqrt(col.y) * 255.99
+        col.z = sqrt(col.z) * 255.99
         output.put({'index': inp['index'], 'color': col})
 
 def make_image(world, width, height, samples):
@@ -112,13 +111,13 @@ def make_image(world, width, height, samples):
 def main():
     w = 192
     h = 120
-    s = 16
+    s = 8
     start_time = time()
     spheres = HitableList()
     spheres.append(Sphere(Vec(0, 0, -1), 0.5, Lambertian(Vec(0.8, 0.3, 0.3)))) # Center
     spheres.append(Sphere(Vec(0, -100.5, -1), 100, Lambertian(Vec(0.8, 0.8, 0.0)))) # Base
     spheres.append(Sphere(Vec(1, 0, -1), 0.5, Metal(Vec(0.8, 0.6, 0.2)))) # Right
-    spheres.append(Sphere(Vec(-1, 0, -1), 0.5, Metal(Vec(0.8, 0.8, 0.8), 0))) # Left
+    spheres.append(Sphere(Vec(-1, 0, -1), 0.5, Dialectric(1.5))) # Left
     write_image(make_image(spheres, w, h, s), w, h)
     print('Took %.2f seconds to process %d rays' % (time() - start_time, w*h*s))
 
