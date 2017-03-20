@@ -1,6 +1,6 @@
 import png
 from ray import Ray
-from vec3 import Vec
+from vec3 import Vec, RGB
 from math import sqrt
 from time import time
 from sys import stdout
@@ -16,7 +16,7 @@ class Camera (object):
         self.lower_left = Vec(-1.0 * r, -1.0, -1.0)
         self.horizontal = Vec(2.0 * r, 0.0, 0.0)
         self.vertical = Vec(0.0, 2.0, 0.0)
-        self.origin = Vec(0, 0, 0) # 0, .25, 4
+        self.origin = Vec(0, 0.25, 4)
 
     def get_ray(self, u, v):
         return Ray(self.origin, self.lower_left + u*self.horizontal + v*self.vertical - self.origin)
@@ -40,7 +40,7 @@ def color(ray, world, depth):
     else:
         unit_dir = Vec.unit_vector(ray.direction())
         t = 0.5 * (unit_dir.y + 1.0)
-        return (1.0 - t) * Vec(1.0, 1.0, 1.0) + t * Vec(0.5, 0.7, 1.0)
+        return (1.0 - t) * RGB(249, 249, 249) + t * RGB(66, 139, 202)
 
 def worker(input, output, state):
     for inp in iter(input.get, 'STOP'):
@@ -109,14 +109,14 @@ def make_image(world, width, height, samples):
     return p
 
 def main():
-    w = 192
-    h = 120
-    s = 8
+    w = 1920
+    h = 1200
+    s = 2048
     start_time = time()
     spheres = HitableList()
-    spheres.append(Sphere(Vec(0, 0, -1), 0.5, Lambertian(Vec(0.8, 0.3, 0.3)))) # Center
-    spheres.append(Sphere(Vec(0, -100.5, -1), 100, Lambertian(Vec(0.8, 0.8, 0.0)))) # Base
-    spheres.append(Sphere(Vec(1, 0, -1), 0.5, Metal(Vec(0.8, 0.6, 0.2)))) # Right
+    spheres.append(Sphere(Vec(0, 0, -1), 0.5, Lambertian(RGB(92, 184, 92)))) # Center
+    spheres.append(Sphere(Vec(0, -100.5, -1), 100, Lambertian(RGB(217, 83, 79)))) # Base
+    spheres.append(Sphere(Vec(1, 0, -1), 0.5, Metal(RGB(255, 238, 173)))) # Right
     spheres.append(Sphere(Vec(-1, 0, -1), 0.5, Dialectric(1.5))) # Left
     write_image(make_image(spheres, w, h, s), w, h)
     print('Took %.2f seconds to process %d rays' % (time() - start_time, w*h*s))

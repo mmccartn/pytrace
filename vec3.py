@@ -85,3 +85,10 @@ class Vec(object):
 
     def __str__(self):
         return '({x},{y},{z})'.format(x=self.x, y=self.y, z=self.z)
+
+class RGB(Vec):
+
+    def __init__(self, x=0, y=0, z=0):
+        self.x = x / 255.0
+        self.y = y / 255.0
+        self.z = z / 255.0
