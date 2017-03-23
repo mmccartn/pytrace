@@ -14,9 +14,9 @@ class Material (object):
 class Lambertian (Material):
 
     def scatter(self, r_in, hit_rec, attenuation, r_scattered):
-        target = hit_rec['p'] + hit_rec['n'] + Sphere.random_in_unit_sphere()
-        r_scattered.A = hit_rec['p']
-        r_scattered.B = target - hit_rec['p']
+        target = hit_rec.p + hit_rec.n + Sphere.random_in_unit_sphere()
+        r_scattered.A = hit_rec.p
+        r_scattered.B = target - hit_rec.p
         attenuation.x = self.albedo.x
         attenuation.y = self.albedo.y
         attenuation.z = self.albedo.z
@@ -31,13 +31,13 @@ class Metal (Material):
         self.fuzz = min(fuzz, 1)
 
     def scatter(self, r_in, hit_rec, attenuation, r_scattered):
-        reflected = Vec.reflect(Vec.unit_vector(r_in.direction()), hit_rec['n'])
-        r_scattered.A = hit_rec['p']
+        reflected = Vec.reflect(Vec.unit_vector(r_in.direction()), hit_rec.n)
+        r_scattered.A = hit_rec.p
         r_scattered.B = reflected + self.fuzz * Sphere.random_in_unit_sphere()
         attenuation.x = self.albedo.x
         attenuation.y = self.albedo.y
         attenuation.z = self.albedo.z
-        return Vec.dot(r_scattered.direction(), hit_rec['n']) > 0
+        return Vec.dot(r_scattered.direction(), hit_rec.n) > 0
 
 class Dialectric (object):
 
@@ -64,28 +64,28 @@ class Dialectric (object):
         return r0 + (1 - r0) * pow((1 - cosine), 5)
 
     def scatter(self, r_in, hit_rec, attenuation, r_scattered):
-        reflected = Vec.reflect(r_in.direction(), hit_rec['n'])
+        reflected = Vec.reflect(r_in.direction(), hit_rec.n)
         attenuation.set(1.0, 1.0, 1.0)
         refracted = Vec()
-        if Vec.dot(r_in.direction(), hit_rec['n']) > 0:
-            outward_normal = -hit_rec['n']
+        if Vec.dot(r_in.direction(), hit_rec.n) > 0:
+            outward_normal = -hit_rec.n
             ior = self.ref_idx
-            cosine = ior * Vec.dot(r_in.direction(), hit_rec['n']) / r_in.direction().length()
+            cosine = ior * Vec.dot(r_in.direction(), hit_rec.n) / r_in.direction().length()
         else:
-            outward_normal = hit_rec['n']
+            outward_normal = hit_rec.n
             ior = 1.0 / self.ref_idx
-            cosine = -Vec.dot(r_in.direction(), hit_rec['n']) / r_in.direction().length()
+            cosine = -Vec.dot(r_in.direction(), hit_rec.n) / r_in.direction().length()
         if Dialectric.refract(r_in.direction(), outward_normal, ior, refracted):
             reflect_prob = Dialectric.schlick(cosine, self.ref_idx)
         else:
-            r_scattered.A = hit_rec['p']
+            r_scattered.A = hit_rec.p
             r_scattered.B = reflected
             reflect_prob = 1.0
         if random() < reflect_prob:
-            r_scattered.A = hit_rec['p']
+            r_scattered.A = hit_rec.p
             r_scattered.B = reflected
         else:
-            r_scattered.A = hit_rec['p']
+            r_scattered.A = hit_rec.p
             r_scattered.B = refracted
         return True
 

@@ -6,7 +6,7 @@ class HitRecord(object):
 
     __slots__ = ('t', 'p', 'n', 'mat')
 
-    def __init__(self, t, p, n, mat):
+    def __init__(self, t=None, p=None, n=None, mat=None):
         self.t = t
         self.p = p
         self.n = n

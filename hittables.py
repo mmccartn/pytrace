@@ -1,6 +1,7 @@
 from vec3 import Vec
 from math import sqrt
 from random import random
+from structs import HitRecord
 
 class Sphere (object):
 
@@ -20,17 +21,17 @@ class Sphere (object):
         if discriminant > 0:
             temp = (-b - sqrt(b*b-a*c))/a
             if temp < tmax and temp > tmin:
-                hit_rec['t'] = temp
-                hit_rec['p'] = ray.point_at_paramater(hit_rec['t'])
-                hit_rec['n'] = (hit_rec['p'] - self.center) / self.radius
-                hit_rec['mat'] = self.material
+                hit_rec.t = temp
+                hit_rec.p = ray.point_at_paramater(hit_rec.t)
+                hit_rec.n = (hit_rec.p - self.center) / self.radius
+                hit_rec.mat = self.material
                 return True
             temp = (-b + sqrt(b * b - a * c)) / a
             if temp < tmax and temp > tmin:
-                hit_rec['t'] = temp
-                hit_rec['p'] = ray.point_at_paramater(hit_rec['t'])
-                hit_rec['n'] = (hit_rec['p'] - self.center) / self.radius
-                hit_rec['mat'] = self.material
+                hit_rec.t = temp
+                hit_rec.p = ray.point_at_paramater(hit_rec.t)
+                hit_rec.n = (hit_rec.p - self.center) / self.radius
+                hit_rec.mat = self.material
                 return True
         return False
 
@@ -46,17 +47,17 @@ class Sphere (object):
 class HitableList (list):
 
     def hit(self, ray, tmin, tmax, hit_rec):
-        temp_rec = {}
+        temp_rec = HitRecord()
         has_hit = False
         closest = tmax
         for i in range(len(self)):
             if self[i].hit(ray, tmin, closest, temp_rec):
                 has_hit = True
-                closest = temp_rec['t']
-                hit_rec['t'] = temp_rec['t']
-                hit_rec['p'] = temp_rec['p']
-                hit_rec['n'] = temp_rec['n']
-                hit_rec['mat'] = temp_rec['mat']
+                closest = temp_rec.t
+                hit_rec.t = temp_rec.t
+                hit_rec.p = temp_rec.p
+                hit_rec.n = temp_rec.n
+                hit_rec.mat = temp_rec.mat
         return has_hit
 
 if __name__ == '__main__':

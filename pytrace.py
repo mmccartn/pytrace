@@ -1,15 +1,16 @@
 import png
-from ray import Ray
-from vec3 import Vec, RGB
 from math import sqrt
 from time import time
 from sys import stdout
 from random import random
 from progressbar import ProgressBar
-from hittables import HitableList, Sphere
-from materials import Lambertian, Metal, Dialectric
 from multiprocessing import Process, Queue, freeze_support, cpu_count
-from structs import PixelResult
+
+from ray import Ray
+from vec3 import Vec, RGB
+from hittables import HitableList, Sphere
+from structs import PixelResult, HitRecord
+from materials import Lambertian, Metal, Dialectric
 
 class Camera (object):
 
@@ -32,11 +33,11 @@ def write_image(p, w, h, name='balls.png'):
     f.close()
 
 def color(ray, world, depth):
-    hit_rec = {}
+    hit_rec = HitRecord()
     if world.hit(ray, 0.001, float('inf'), hit_rec):
         scattered = Ray()
         attenuation = Vec()
-        if depth < 50 and hit_rec['mat'].scatter(ray, hit_rec, attenuation, scattered):
+        if depth < 50 and hit_rec.mat.scatter(ray, hit_rec, attenuation, scattered):
             return attenuation * color(scattered, world, depth + 1)
         else:
             return Vec(0, 0, 0)
