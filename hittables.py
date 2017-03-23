@@ -4,6 +4,8 @@ from random import random
 
 class Sphere (object):
 
+    __slots__ = ('center', 'radius', 'material')
+
     def __init__(self, center, radius, material):
         self.center = center
         self.radius = radius

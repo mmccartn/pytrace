@@ -13,6 +13,8 @@ from structs import PixelResult
 
 class Camera (object):
 
+    __slots__ = ('lower_left', 'horizontal', 'vertical', 'origin')
+
     def __init__(self, r=1.6):
         self.lower_left = Vec(-1.0 * r, -1.0, -1.0)
         self.horizontal = Vec(2.0 * r, 0.0, 0.0)

@@ -2,6 +2,8 @@ from math import sqrt
 
 class Vec(object):
 
+    __slots__ = ('x', 'y', 'z')
+
     def __init__(self, x=0, y=0, z=0):
         self.x = x
         self.y = y
@@ -92,3 +94,6 @@ class RGB(Vec):
         self.x = x / 255.0
         self.y = y / 255.0
         self.z = z / 255.0
+
+if __name__ == '__main__':
+    pass

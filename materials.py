@@ -6,6 +6,8 @@ from hittables import Sphere
 
 class Material (object):
 
+    __slots__ = ('albedo', )
+
     def __init__(self, albedo):
         self.albedo = albedo
 
@@ -22,6 +24,8 @@ class Lambertian (Material):
 
 class Metal (Material):
 
+    __slots__ = ('fuzz', )
+
     def __init__(self, albedo, fuzz=1):
         super().__init__(albedo)
         self.fuzz = min(fuzz, 1)
@@ -36,6 +40,8 @@ class Metal (Material):
         return Vec.dot(r_scattered.direction(), hit_rec['n']) > 0
 
 class Dialectric (object):
+
+    __slots__ = ('ref_idx', )
 
     def __init__(self, ri):
         self.ref_idx = ri

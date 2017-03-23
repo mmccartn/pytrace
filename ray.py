@@ -1,6 +1,8 @@
 
 class Ray (object):
 
+    __slots__ = ('A', 'B')
+
     def __init__(self, a=None, b=None):
         self.A = a
         self.B = b
