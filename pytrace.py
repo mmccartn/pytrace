@@ -9,6 +9,7 @@ from progressbar import ProgressBar
 from hittables import HitableList, Sphere
 from materials import Lambertian, Metal, Dialectric
 from multiprocessing import Process, Queue, freeze_support, cpu_count
+from structs import PixelResult
 
 class Camera (object):
 
@@ -43,35 +44,37 @@ def color(ray, world, depth):
         return (1.0 - t) * RGB(249, 249, 249) + t * RGB(66, 139, 202)
 
 def worker(input, output, state):
-    for inp in iter(input.get, 'STOP'):
+    samples, width, height, cam, world = state
+    range_samples = range(samples)
+    for i, j, index in iter(input.get, 'STOP'):
         col = Vec(0, 0, 0)
-        for s in range(state['samples']):
-            u = (inp['i'] + random()) / state['width']
-            v = (inp['j'] + random()) / state['height']
-            ray = state['cam'].get_ray(u, v)
-            col += color(ray, state['world'], 0)
-        col /= state['samples']
+        for s in range_samples:
+            u = (i + random()) / width
+            v = (j + random()) / height
+            ray = cam.get_ray(u, v)
+            col += color(ray, world, 0)
+        col /= samples
         col.x = sqrt(col.x) * 255.99
         col.y = sqrt(col.y) * 255.99
         col.z = sqrt(col.z) * 255.99
-        output.put({'index': inp['index'], 'color': col})
+        output.put(PixelResult(index, col))
 
 def make_image(world, width, height, samples):
     task_queue = Queue()
     done_queue = Queue()
 
-    state = {
-        'samples': samples,
-        'width': width,
-        'height': height,
-        'cam': Camera(),
-        'world': world
-    }
+    state = (
+        samples,
+        width,
+        height,
+        Camera(),
+        world
+    )
 
     index = 0
     for j in reversed(range(height)):
         for i in range(width):
-            task_queue.put({'i': i, 'j': j, 'index': index})
+            task_queue.put((i, j, index))
             index += 1
 
     print('Starting {0} tasks in {1} processes.'.format(width*height, cpu_count()))
@@ -95,11 +98,11 @@ def make_image(world, width, height, samples):
 
     p = []
     index = 0
-    results.sort(key=lambda x: x['index'], reverse=False)
+    results.sort(key=lambda x: x.index, reverse=False)
     for j in range(height):
         row = []
         for i in range(width):
-            col = results[index]['color']
+            col = results[index].color
             row.append(col.x)
             row.append(col.y)
             row.append(col.z)
