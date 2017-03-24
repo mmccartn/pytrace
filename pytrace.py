@@ -10,7 +10,9 @@ from ray import Ray
 from vec3 import Vec, RGB
 from hittables import HitableList, Sphere
 from structs import PixelResult, HitRecord
-from materials import Lambertian, Metal, Dialectric
+from materials import Lambertian, Metal, Dialectric, Emissive
+
+MAXIMUM_COLOR_VALUE = 255.99
 
 class Camera (object):
 
@@ -57,10 +59,25 @@ def worker(input, output, state):
             ray = cam.get_ray(u, v)
             col += color(ray, world, 0)
         col /= samples
-        col.x = sqrt(col.x) * 255.99
-        col.y = sqrt(col.y) * 255.99
-        col.z = sqrt(col.z) * 255.99
+        col.x = sqrt(col.x) * MAXIMUM_COLOR_VALUE
+        col.y = sqrt(col.y) * MAXIMUM_COLOR_VALUE
+        col.z = sqrt(col.z) * MAXIMUM_COLOR_VALUE
         output.put(PixelResult(index, col))
+
+def normalize_color_range(img):
+    mcc = get_max_color_component(img)
+    if mcc > MAXIMUM_COLOR_VALUE:
+        for r in range(len(img)):
+            row = img[r]
+            for c in range(len(row)):
+                row[c] = (row[c] / mcc) * MAXIMUM_COLOR_VALUE
+    return img
+
+def get_max_color_component(img):
+    max_color_component = 0
+    for r in range(len(img)):
+        max_color_component = max([max_color_component] + img[r])
+    return max_color_component
 
 def make_image(world, width, height, samples):
     task_queue = Queue()
@@ -124,7 +141,9 @@ def main():
     spheres.append(Sphere(Vec(0, -100.5, -1), 100, Lambertian(RGB(217, 83, 79)))) # Base
     spheres.append(Sphere(Vec(1, 0, -1), 0.5, Metal(RGB(255, 238, 173)))) # Right
     spheres.append(Sphere(Vec(-1, 0, -1), 0.5, Dialectric(1.5))) # Left
-    write_image(make_image(spheres, w, h, s), w, h)
+    image = make_image(spheres, w, h, s)
+    normalize_color_range(image)
+    write_image(image, w, h)
     print('Took %.2f seconds to process %d rays' % (time() - start_time, w*h*s))
 
 if __name__ == '__main__':
