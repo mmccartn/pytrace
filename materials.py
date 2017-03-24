@@ -27,10 +27,10 @@ class Emissive (Material):
     def scatter(self, r_in, hit_rec, attenuation, r_scattered):
         r_scattered.A = hit_rec.p
         r_scattered.B = r_in.B - (2.0 * r_in.B)
-        k = r_scattered.B.norm()
-        attenuation.x = max(1.0, k) * self.albedo.x
-        attenuation.y = max(1.0, k) * self.albedo.y
-        attenuation.z = max(1.0, k) * self.albedo.z
+        k = max(1.0, r_scattered.B.norm())
+        attenuation.x = k * self.albedo.x
+        attenuation.y = k * self.albedo.y
+        attenuation.z = k * self.albedo.z
         return True
 
 class Metal (Material):
