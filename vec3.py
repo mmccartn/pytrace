@@ -86,7 +86,7 @@ class Vec(object):
         return self.__div__(v)
 
     def __str__(self):
-        return '({x},{y},{z})'.format(x=self.x, y=self.y, z=self.z)
+        return '(%.6f, %.6f, %.6f)' % (self.x, self.y, self.z)
 
 class RGB(Vec):
 
