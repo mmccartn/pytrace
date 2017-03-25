@@ -8,24 +8,12 @@ from multiprocessing import Process, Queue, freeze_support, cpu_count
 
 from ray import Ray
 from vec3 import Vec, RGB
+from camera import Camera
 from hittables import HitableList, Sphere
 from structs import PixelResult, HitRecord
 from materials import Lambertian, Metal, Dialectric, Emissive
 
 MAXIMUM_COLOR_VALUE = 255.99
-
-class Camera (object):
-
-    __slots__ = ('lower_left', 'horizontal', 'vertical', 'origin')
-
-    def __init__(self, r=1.6):
-        self.lower_left = Vec(-1.0 * r, -1.0, -1.0)
-        self.horizontal = Vec(2.0 * r, 0.0, 0.0)
-        self.vertical = Vec(0.0, 2.0, 0.0)
-        self.origin = Vec(0, 0.25, 4)
-
-    def get_ray(self, u, v):
-        return Ray(self.origin, self.lower_left + u*self.horizontal + v*self.vertical - self.origin)
 
 def write_image(p, w, h, name='balls.png'):
     print('Writing out to file: {0}'.format(name))
@@ -89,7 +77,7 @@ def make_image(world, width, height, samples):
         samples,
         width,
         height,
-        Camera(),
+        Camera(width / height, 20, Vec(3, 3, 2), Vec(0.0, 0.0, -1.0)),
         world
     )
 
