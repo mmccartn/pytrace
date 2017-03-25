@@ -24,14 +24,14 @@ class Lambertian (Material):
 
 class Emissive (Material):
 
-    def scatter(self, r_in, hit_rec, attenuation, r_scattered):
-        r_scattered.A = hit_rec.p
-        r_scattered.B = r_in.B - (2.0 * r_in.B)
-        k = max(1.0, r_scattered.B.norm())
-        attenuation.x = k * self.albedo.x
-        attenuation.y = k * self.albedo.y
-        attenuation.z = k * self.albedo.z
-        return True
+    __slots__ = ('intensity', )
+
+    def __init__(self, albedo, intensity=1.0):
+        self.albedo = albedo
+        self.intensity = intensity
+
+    def get_color(self):
+        return self.intensity * self.albedo
 
 class Metal (Material):
 

@@ -39,7 +39,9 @@ def color(ray, world, depth):
     if world.hit(ray, 0.001, float('inf'), hit_rec):
         scattered = Ray()
         attenuation = Vec()
-        if depth < 50 and hit_rec.mat.scatter(ray, hit_rec, attenuation, scattered):
+        if type(hit_rec.mat) is Emissive:
+            return hit_rec.mat.get_color()
+        elif depth < 50 and hit_rec.mat.scatter(ray, hit_rec, attenuation, scattered):
             return attenuation * color(scattered, world, depth + 1)
         else:
             return Vec(0, 0, 0)
@@ -141,6 +143,7 @@ def main():
     spheres.append(Sphere(Vec(0, -100.5, -1), 100, Lambertian(RGB(217, 83, 79)))) # Base
     spheres.append(Sphere(Vec(1, 0, -1), 0.5, Metal(RGB(255, 238, 173)))) # Right
     spheres.append(Sphere(Vec(-1, 0, -1), 0.5, Dialectric(1.5))) # Left
+    spheres.append(Sphere(Vec(1, 2, 0), 0.5, Emissive(RGB(254, 252, 255), 2))) # Above
     image = make_image(spheres, w, h, s)
     normalize_color_range(image)
     write_image(image, w, h)
