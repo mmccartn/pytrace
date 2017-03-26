@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-PixelResult = namedtuple('PixelResult', ('index', 'color'))
+RowResult = namedtuple('RowResult', ('index', 'row'))
 
 class HitRecord(object):
 

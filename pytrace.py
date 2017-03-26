@@ -10,7 +10,7 @@ from ray import Ray
 from vec3 import Vec, RGB
 from camera import Camera
 from hittables import HitableList, Sphere
-from structs import PixelResult, HitRecord
+from structs import RowResult, HitRecord
 from materials import Lambertian, Metal, Dialectric, Emissive
 
 MAXIMUM_COLOR_VALUE = 255.99
@@ -41,18 +41,21 @@ def color(ray, world, depth):
 def worker(input, output, state):
     samples, width, height, cam, world = state
     range_samples = range(samples)
-    for i, j, index in iter(input.get, 'STOP'):
-        col = Vec(0, 0, 0)
-        for s in range_samples:
-            u = (i + random()) / width
-            v = (j + random()) / height
-            ray = cam.get_ray(u, v)
-            col += color(ray, world, 0)
-        col /= samples
-        col.x = sqrt(col.x) * MAXIMUM_COLOR_VALUE
-        col.y = sqrt(col.y) * MAXIMUM_COLOR_VALUE
-        col.z = sqrt(col.z) * MAXIMUM_COLOR_VALUE
-        output.put(PixelResult(index, col))
+    range_width = range(width)
+    for j in iter(input.get, 'STOP'):
+        row = []
+        for i in range_width:
+            col = Vec(0, 0, 0)
+            for s in range_samples:
+                u = (i + random()) / width
+                v = (j + random()) / height
+                ray = cam.get_ray(u, v)
+                col += color(ray, world, 0)
+            col /= samples
+            row.append(sqrt(col.x) * MAXIMUM_COLOR_VALUE)
+            row.append(sqrt(col.y) * MAXIMUM_COLOR_VALUE)
+            row.append(sqrt(col.z) * MAXIMUM_COLOR_VALUE)
+        output.put(RowResult(j, row))
 
 def normalize_color_range(img):
     mcc = get_max_color_component(img)
@@ -81,43 +84,36 @@ def make_image(world, width, height, samples):
         world
     )
 
-    index = 0
-    for j in reversed(range(height)):
-        for i in range(width):
-            task_queue.put((i, j, index))
-            index += 1
+    row_index = 0
+    for row_index in reversed(range(height)):
+        task_queue.put(row_index)
 
-    print('Starting {0} tasks in {1} processes.'.format(width*height, cpu_count()))
+    num_tasks = height
+    num_cpus = cpu_count()
+
+    print('Starting {0} tasks in {1} processes.'.format(num_tasks, num_cpus))
     stdout.flush()
 
-    for proc in range(cpu_count()):
+    for proc in range(num_cpus):
         Process(target=worker, args=(task_queue, done_queue, state)).start()
 
     results = []
-    bar = ProgressBar(redirect_stdout=True, max_value=width*height)
-    for i in range(index):
-        bar.update(i)
+    bar = ProgressBar(redirect_stdout=True, max_value=num_tasks)
+    for ti in range(num_tasks):
+        bar.update(ti)
         results.append(done_queue.get())
     bar.finish()
 
-    for proc in range(cpu_count()):
+    for proc in range(num_cpus):
         task_queue.put('STOP')
 
     print('Sorting.')
     stdout.flush()
 
     p = []
-    index = 0
-    results.sort(key=lambda x: x.index, reverse=False)
-    for j in range(height):
-        row = []
-        for i in range(width):
-            col = results[index].color
-            row.append(col.x)
-            row.append(col.y)
-            row.append(col.z)
-            index += 1
-        p.append(row)
+    results.sort(key=lambda x: x.index, reverse=True)
+    for result in results:
+        p.append(result.row)
 
     return p
 
