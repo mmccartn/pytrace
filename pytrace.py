@@ -76,13 +76,13 @@ def make_image(world, width, height, samples):
     task_queue = Queue()
     done_queue = Queue()
 
-    state = (
-        samples,
-        width,
-        height,
-        Camera(width / height, 20, Vec(3, 3, 2), Vec(0.0, 0.0, -1.0)),
-        world
-    )
+    lookfrom = Vec(-3, 1, 4)
+    lookat = Vec(0, 0, -1)
+    dist_to_focus = (lookfrom - lookat).length()
+    aperture = 0.01
+    cam = Camera(width / height, 30, aperture, dist_to_focus, lookfrom, lookat)
+
+    state = (samples, width, height, cam, world)
 
     row_index = 0
     for row_index in reversed(range(height)):
