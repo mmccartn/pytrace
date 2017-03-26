@@ -52,9 +52,9 @@ def worker(input, output, state):
                 ray = cam.get_ray(u, v)
                 col += color(ray, world, 0)
             col /= samples
-            row.append(sqrt(col.x) * MAXIMUM_COLOR_VALUE)
-            row.append(sqrt(col.y) * MAXIMUM_COLOR_VALUE)
-            row.append(sqrt(col.z) * MAXIMUM_COLOR_VALUE)
+            row.append(int(sqrt(col.x) * MAXIMUM_COLOR_VALUE))
+            row.append(int(sqrt(col.y) * MAXIMUM_COLOR_VALUE))
+            row.append(int(sqrt(col.z) * MAXIMUM_COLOR_VALUE))
         output.put(RowResult(j, row))
 
 def normalize_color_range(img):
