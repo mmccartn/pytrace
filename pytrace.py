@@ -8,12 +8,24 @@ from multiprocessing import Process, Queue, freeze_support, cpu_count
 
 from ray import Ray
 from vec3 import Vec, RGB
-from camera import Camera
 from hittables import HitableList, Sphere
-from structs import RowResult, HitRecord
+from structs import PixelResult, HitRecord
 from materials import Lambertian, Metal, Dialectric, Emissive
 
 MAXIMUM_COLOR_VALUE = 255.99
+
+class Camera (object):
+
+    __slots__ = ('lower_left', 'horizontal', 'vertical', 'origin')
+
+    def __init__(self, r=1.6):
+        self.lower_left = Vec(-1.0 * r, -1.0, -1.0)
+        self.horizontal = Vec(2.0 * r, 0.0, 0.0)
+        self.vertical = Vec(0.0, 2.0, 0.0)
+        self.origin = Vec(0, 0, 4)
+
+    def get_ray(self, u, v):
+        return Ray(self.origin, self.lower_left + u*self.horizontal + v*self.vertical - self.origin)
 
 def write_image(p, w, h, name='balls.png'):
     print('Writing out to file: {0}'.format(name))
@@ -27,9 +39,7 @@ def color(ray, world, depth):
     if world.hit(ray, 0.001, float('inf'), hit_rec):
         scattered = Ray()
         attenuation = Vec()
-        if type(hit_rec.mat) is Emissive:
-            return hit_rec.mat.get_color()
-        elif depth < 50 and hit_rec.mat.scatter(ray, hit_rec, attenuation, scattered):
+        if depth < 50 and hit_rec.mat.scatter(ray, hit_rec, attenuation, scattered):
             return attenuation * color(scattered, world, depth + 1)
         else:
             return Vec(0, 0, 0)
@@ -41,21 +51,18 @@ def color(ray, world, depth):
 def worker(input, output, state):
     samples, width, height, cam, world = state
     range_samples = range(samples)
-    range_width = range(width)
-    for j in iter(input.get, 'STOP'):
-        row = []
-        for i in range_width:
-            col = Vec(0, 0, 0)
-            for s in range_samples:
-                u = (i + random()) / width
-                v = (j + random()) / height
-                ray = cam.get_ray(u, v)
-                col += color(ray, world, 0)
-            col /= samples
-            row.append(int(sqrt(col.x) * MAXIMUM_COLOR_VALUE))
-            row.append(int(sqrt(col.y) * MAXIMUM_COLOR_VALUE))
-            row.append(int(sqrt(col.z) * MAXIMUM_COLOR_VALUE))
-        output.put(RowResult(j, row))
+    for i, j, index in iter(input.get, 'STOP'):
+        col = Vec(0, 0, 0)
+        for s in range_samples:
+            u = (i + random()) / width
+            v = (j + random()) / height
+            ray = cam.get_ray(u, v)
+            col += color(ray, world, 0)
+        col /= samples
+        col.x = sqrt(col.x) * MAXIMUM_COLOR_VALUE
+        col.y = sqrt(col.y) * MAXIMUM_COLOR_VALUE
+        col.z = sqrt(col.z) * MAXIMUM_COLOR_VALUE
+        output.put(PixelResult(index, col))
 
 def normalize_color_range(img):
     mcc = get_max_color_component(img)
@@ -76,58 +83,66 @@ def make_image(world, width, height, samples):
     task_queue = Queue()
     done_queue = Queue()
 
-    lookfrom = Vec(-3, 1, 4)
-    lookat = Vec(0, 0, -1)
-    dist_to_focus = (lookfrom - lookat).length()
-    aperture = 0.01
-    cam = Camera(width / height, 30, aperture, dist_to_focus, lookfrom, lookat)
+    state = (
+        samples,
+        width,
+        height,
+        Camera(),
+        world
+    )
 
-    state = (samples, width, height, cam, world)
+    index = 0
+    for j in reversed(range(height)):
+        for i in range(width):
+            task_queue.put((i, j, index))
+            index += 1
 
-    row_index = 0
-    for row_index in reversed(range(height)):
-        task_queue.put(row_index)
-
-    num_tasks = height
-    num_cpus = cpu_count()
-
-    print('Starting {0} tasks in {1} processes.'.format(num_tasks, num_cpus))
+    print('Starting {0} tasks in {1} processes.'.format(width*height, cpu_count()))
     stdout.flush()
 
-    for proc in range(num_cpus):
+    for proc in range(cpu_count()):
         Process(target=worker, args=(task_queue, done_queue, state)).start()
 
     results = []
-    bar = ProgressBar(redirect_stdout=True, max_value=num_tasks)
-    for ti in range(num_tasks):
-        bar.update(ti)
+    bar = ProgressBar(redirect_stdout=True, max_value=width*height)
+    for i in range(index):
+        bar.update(i)
         results.append(done_queue.get())
     bar.finish()
 
-    for proc in range(num_cpus):
+    for proc in range(cpu_count()):
         task_queue.put('STOP')
 
     print('Sorting.')
     stdout.flush()
 
     p = []
-    results.sort(key=lambda x: x.index, reverse=True)
-    for result in results:
-        p.append(result.row)
+    index = 0
+    results.sort(key=lambda x: x.index, reverse=False)
+    for j in range(height):
+        row = []
+        for i in range(width):
+            col = results[index].color
+            row.append(col.x)
+            row.append(col.y)
+            row.append(col.z)
+            index += 1
+        p.append(row)
 
     return p
 
 def main():
     w = 1920
     h = 1200
-    s = 2048
+    s = 4096
     start_time = time()
     spheres = HitableList()
-    spheres.append(Sphere(Vec(0, 0, -1), 0.5, Lambertian(RGB(92, 184, 92)))) # Center
+    spheres.append(Sphere(Vec(-0.5, -0.25, -0.5), 0.25, Metal(RGB(255, 255, 255), 0))) # front left
+    spheres.append(Sphere(Vec(0.5, -0.25, -0.5), 0.25, Dialectric(1.5))) # front right
+    spheres.append(Sphere(Vec(0, 0, -1.5), 0.5, Lambertian(RGB(92, 184, 92)))) # Center
+    spheres.append(Sphere(Vec(1, 0, -2), 0.5, Metal(RGB(255, 238, 173)))) # Right
+    spheres.append(Sphere(Vec(-1, 0, -1.75), 0.5, Dialectric(1.5))) # Left
     spheres.append(Sphere(Vec(0, -100.5, -1), 100, Lambertian(RGB(217, 83, 79)))) # Base
-    spheres.append(Sphere(Vec(1, 0, -1), 0.5, Metal(RGB(255, 238, 173)))) # Right
-    spheres.append(Sphere(Vec(-1, 0, -1), 0.5, Dialectric(1.5))) # Left
-    spheres.append(Sphere(Vec(1, 2, 0), 0.5, Emissive(RGB(254, 252, 255), 2))) # Above
     image = make_image(spheres, w, h, s)
     normalize_color_range(image)
     write_image(image, w, h)
