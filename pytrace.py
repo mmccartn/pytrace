@@ -72,7 +72,27 @@ def get_max_color_component(img):
         max_color_component = max([max_color_component] + img[r])
     return max_color_component
 
-def make_image(world, width, height, samples):
+def make_image_sync(world, cam, width, height, samples):
+    p = []
+    range_width = range(width)
+    range_samples = range(samples)
+    for j in reversed(range(height)):
+        row = []
+        for i in range_width:
+            col = Vec(0, 0, 0)
+            for s in range_samples:
+                u = (i + random()) / width
+                v = (j + random()) / height
+                ray = cam.get_ray(u, v)
+                col += color(ray, world, 0)
+            col /= samples
+            row.append(int(sqrt(col.x) * MAXIMUM_COLOR_VALUE))
+            row.append(int(sqrt(col.y) * MAXIMUM_COLOR_VALUE))
+            row.append(int(sqrt(col.z) * MAXIMUM_COLOR_VALUE))
+        p.append(row)
+    return p
+
+def make_image(world, cam, width, height, samples):
     task_queue = Queue()
     done_queue = Queue()
 
@@ -116,18 +136,22 @@ def main():
     h = 1200
     s = 2048
     start_time = time()
+
     spheres = HitableList()
     spheres.append(Sphere(Vec(0, 0, -1), 0.5, Lambertian(RGB(92, 184, 92)))) # Center
     spheres.append(Sphere(Vec(0, -100.5, -1), 100, Lambertian(RGB(217, 83, 79)))) # Base
     spheres.append(Sphere(Vec(1, 0, -1), 0.5, Metal(RGB(255, 238, 173)))) # Right
     spheres.append(Sphere(Vec(-1, 0, -1), 0.5, Dialectric(1.5))) # Left
     spheres.append(Sphere(Vec(1, 2, 0), 0.5, Emissive(RGB(254, 252, 255), 2))) # Above
-    image = make_image(spheres, w, h, s)
+
     lookfrom = Vec(-3, 1, 4)
     lookat = Vec(0, 0, -1)
     dist_to_focus = (lookfrom - lookat).length()
     aperture = 0.01
     cam = Camera(w / h, 25, aperture, dist_to_focus, lookfrom, lookat)
+
+    image = make_image_sync(spheres, cam, w, h, s)
+
     normalize_color_range(image)
     write_image(image, w, h)
     print('Took %.2f seconds to process %d rays' % (time() - start_time, w*h*s))
