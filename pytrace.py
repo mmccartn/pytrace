@@ -27,12 +27,13 @@ def color(ray, world, depth):
     if world.hit(ray, 0.001, float('inf'), hit_rec):
         scattered = Ray()
         attenuation = Vec()
-        if type(hit_rec.mat) is Emissive:
-            return hit_rec.mat.get_color()
-        elif depth < 50 and hit_rec.mat.scatter(ray, hit_rec, attenuation, scattered):
+        hit_mat = hit_rec.mat
+        if type(hit_mat) is Emissive:
+            return hit_mat.get_color()
+        elif depth < 50 and hit_mat.scatter(ray, hit_rec, attenuation, scattered):
             return attenuation * color(scattered, world, depth + 1)
         else:
-            return Vec(0, 0, 0)
+            return Vec()
     else:
         unit_dir = Vec.unit_vector(ray.direction)
         t = 0.5 * (unit_dir.y + 1.0)
