@@ -34,7 +34,7 @@ def color(ray, world, depth):
         else:
             return Vec(0, 0, 0)
     else:
-        unit_dir = Vec.unit_vector(ray.direction())
+        unit_dir = Vec.unit_vector(ray.direction)
         t = 0.5 * (unit_dir.y + 1.0)
         return (1.0 - t) * RGB(249, 249, 249) + t * RGB(66, 139, 202)
 

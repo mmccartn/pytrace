@@ -7,9 +7,11 @@ class Ray (object):
         self.A = a
         self.B = b
 
+    @property
     def origin(self):
         return self.A
 
+    @property
     def direction(self):
         return self.B
 

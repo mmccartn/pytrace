@@ -13,9 +13,10 @@ class Sphere (object):
         self.material = material
 
     def hit(self, ray, tmin, tmax, hit_rec):
-        oc = ray.origin() - self.center
-        a = Vec.dot(ray.direction(), ray.direction())
-        b = Vec.dot(oc, ray.direction())
+        oc = ray.origin - self.center
+        direction = ray.direction
+        a = Vec.dot(direction, direction)
+        b = Vec.dot(oc, direction)
         c = Vec.dot(oc, oc) - self.radius*self.radius
         discriminant = b*b - a*c
         if discriminant > 0:
