@@ -76,12 +76,6 @@ def make_image(world, width, height, samples):
     task_queue = Queue()
     done_queue = Queue()
 
-    lookfrom = Vec(-3, 1, 4)
-    lookat = Vec(0, 0, -1)
-    dist_to_focus = (lookfrom - lookat).length()
-    aperture = 0.01
-    cam = Camera(width / height, 30, aperture, dist_to_focus, lookfrom, lookat)
-
     state = (samples, width, height, cam, world)
 
     row_index = 0
@@ -129,6 +123,11 @@ def main():
     spheres.append(Sphere(Vec(-1, 0, -1), 0.5, Dialectric(1.5))) # Left
     spheres.append(Sphere(Vec(1, 2, 0), 0.5, Emissive(RGB(254, 252, 255), 2))) # Above
     image = make_image(spheres, w, h, s)
+    lookfrom = Vec(-3, 1, 4)
+    lookat = Vec(0, 0, -1)
+    dist_to_focus = (lookfrom - lookat).length()
+    aperture = 0.01
+    cam = Camera(w / h, 25, aperture, dist_to_focus, lookfrom, lookat)
     normalize_color_range(image)
     write_image(image, w, h)
     print('Took %.2f seconds to process %d rays' % (time() - start_time, w*h*s))
