@@ -1,4 +1,5 @@
 from math import sqrt
+from random import random
 
 class Vec(object):
 
@@ -18,6 +19,12 @@ class Vec(object):
         self.x = x
         self.y = y
         self.z = z
+
+    def randomize(self):
+        self.x = random()
+        self.y = random()
+        self.z = random()
+        return self
 
     @staticmethod
     def from_vec(v):
@@ -94,6 +101,8 @@ class RGB(Vec):
         self.x = x / 255.0
         self.y = y / 255.0
         self.z = z / 255.0
+
+vec_one = Vec(1, 1, 1)
 
 if __name__ == '__main__':
     pass
