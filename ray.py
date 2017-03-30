@@ -16,7 +16,7 @@ class Ray (object):
         return self.B
 
     def point_at_paramater(self, t):
-        return self.A + t*self.B
+        return (t * self.B).add(self.A)
 
     def __str__(self):
         return 'p(t) = {A} + t*{B}'.format(A=self.A, B=self.B)

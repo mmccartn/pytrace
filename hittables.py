@@ -1,6 +1,7 @@
 import vec3
 from vec3 import Vec
 from math import sqrt
+from random import random
 from structs import HitRecord
 
 class Sphere (object):
@@ -41,10 +42,11 @@ class Sphere (object):
 
     @staticmethod
     def random_in_unit_sphere():
-        vec_one = vec3.vec_one
         p = Vec()
         while True:
-            p = 2 * p.randomize() - vec_one
+            p.x = 2 * random() - 1
+            p.y = 2 * random() - 1
+            p.z = 2 * random() - 1
             if p.squared_length() < 1:
                 break
         return p

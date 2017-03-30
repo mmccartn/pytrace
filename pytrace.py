@@ -13,7 +13,8 @@ from hittables import HitableList, Sphere
 from structs import RowResult, HitRecord
 from materials import Lambertian, Metal, Dialectric, Emissive
 
-MAXIMUM_COLOR_VALUE = 255.99
+BG_COL_A = RGB(249, 249, 249)
+BG_COL_B = RGB(66, 139, 202)
 
 def write_image(p, w, h, name='balls.png'):
     print('Writing out to file: {0}'.format(name))
@@ -28,16 +29,19 @@ def color(ray, world, depth):
         scattered = Ray()
         attenuation = Vec()
         hit_mat = hit_rec.mat
-        if type(hit_mat) is Emissive:
-            return hit_mat.get_color()
-        elif depth < 50 and hit_mat.scatter(ray, hit_rec, attenuation, scattered):
-            return attenuation * color(scattered, world, depth + 1)
+        if depth < 50 and hit_mat.scatter(ray, hit_rec, attenuation, scattered):
+            return color(scattered, world, depth + 1).vec_mul(attenuation)
         else:
             return Vec()
     else:
         unit_dir = Vec.unit_vector(ray.direction)
-        t = 0.5 * (unit_dir.y + 1.0)
-        return (1.0 - t) * RGB(249, 249, 249) + t * RGB(66, 139, 202)
+        t = 0.5 * (unit_dir.y + 1)
+        ti = 1 - t
+        return Vec(
+            ti * BG_COL_A.x + t * BG_COL_B.x,
+            ti * BG_COL_A.y + t * BG_COL_B.y,
+            ti * BG_COL_A.z + t * BG_COL_B.z
+        )
 
 def worker(input, output, state):
     samples, width, height, cam, world = state
@@ -53,18 +57,18 @@ def worker(input, output, state):
                 ray = cam.get_ray(u, v)
                 col += color(ray, world, 0)
             col /= samples
-            row.append(int(sqrt(col.x) * MAXIMUM_COLOR_VALUE))
-            row.append(int(sqrt(col.y) * MAXIMUM_COLOR_VALUE))
-            row.append(int(sqrt(col.z) * MAXIMUM_COLOR_VALUE))
+            row.append(int(sqrt(col.x) * 255.99))
+            row.append(int(sqrt(col.y) * 255.99))
+            row.append(int(sqrt(col.z) * 255.99))
         output.put(RowResult(j, row))
 
 def normalize_color_range(img):
     mcc = get_max_color_component(img)
-    if mcc > MAXIMUM_COLOR_VALUE:
+    if mcc > 255.99:
         for r in range(len(img)):
             row = img[r]
             for c in range(len(row)):
-                row[c] = (row[c] / mcc) * MAXIMUM_COLOR_VALUE
+                row[c] = (row[c] / mcc) * 255.99
     return img
 
 def get_max_color_component(img):
@@ -80,16 +84,16 @@ def make_image_sync(world, cam, width, height, samples):
     for j in reversed(range(height)):
         row = []
         for i in range_width:
-            col = Vec(0, 0, 0)
+            col = Vec()
             for s in range_samples:
                 u = (i + random()) / width
                 v = (j + random()) / height
                 ray = cam.get_ray(u, v)
-                col += color(ray, world, 0)
-            col /= samples
-            row.append(int(sqrt(col.x) * MAXIMUM_COLOR_VALUE))
-            row.append(int(sqrt(col.y) * MAXIMUM_COLOR_VALUE))
-            row.append(int(sqrt(col.z) * MAXIMUM_COLOR_VALUE))
+                col.add(color(ray, world, 0))
+            col.div(samples)
+            row.append(int(sqrt(col.x) * 255.99))
+            row.append(int(sqrt(col.y) * 255.99))
+            row.append(int(sqrt(col.z) * 255.99))
         p.append(row)
     return p
 
@@ -133,9 +137,9 @@ def make_image(world, cam, width, height, samples):
     return p
 
 def main():
-    w = 1920
-    h = 1200
-    s = 2048
+    w = 200
+    h = 100
+    s = 256
     start_time = time()
 
     spheres = HitableList()
@@ -143,7 +147,6 @@ def main():
     spheres.append(Sphere(Vec(0, -100.5, -1), 100, Lambertian(RGB(217, 83, 79)))) # Base
     spheres.append(Sphere(Vec(1, 0, -1), 0.5, Metal(RGB(255, 238, 173)))) # Right
     spheres.append(Sphere(Vec(-1, 0, -1), 0.5, Dialectric(1.5))) # Left
-    spheres.append(Sphere(Vec(1, 2, 0), 0.5, Emissive(RGB(254, 252, 255), 2))) # Above
 
     lookfrom = Vec(-3, 1, 4)
     lookat = Vec(0, 0, -1)
@@ -151,7 +154,7 @@ def main():
     aperture = 0.01
     cam = Camera(w / h, 25, aperture, dist_to_focus, lookfrom, lookat)
 
-    image = make_image_sync(spheres, cam, w, h, s)
+    image = make_image(spheres, cam, w, h, s)
 
     normalize_color_range(image)
     write_image(image, w, h)

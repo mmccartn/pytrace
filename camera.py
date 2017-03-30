@@ -6,8 +6,9 @@ from random import random
 def random_in_unit_disk():
     p = Vec()
     while True:
-        p = 2.0 * Vec(random(), random(), 0) * Vec(1, 1, 0)
-        if Vec.dot(p, p) >= 1.0:
+        p.x = 2 * random()
+        p.y = 2 * random()
+        if Vec.dot(p, p) >= 1:
             break
     return p
 
@@ -36,11 +37,14 @@ class Camera (object):
 
     def get_ray(self, s, t):
         if self.lens_radius > 0:
-            rd = self.lens_radius * random_in_unit_disk()
+            rd = random_in_unit_disk().mul(self.lens_radius)
         else:
             rd = Vec()
-        offset = self.u * rd.x + self.v * rd.y
-        return Ray(self.origin + offset, self.lower_left + s*self.horizontal + t*self.vertical - self.origin - offset)
+        offset = (self.u * rd.x).add(self.v * rd.y)
+        return Ray(
+            self.origin + offset,
+            offset.neg_add(self.lower_left + s*self.horizontal + t*self.vertical - self.origin)
+        )
 
 if __name__ == '__main__':
     pass

@@ -14,9 +14,9 @@ class Material (object):
 class Lambertian (Material):
 
     def scatter(self, r_in, hit_rec, attenuation, r_scattered):
-        target = hit_rec.p + hit_rec.n + Sphere.random_in_unit_sphere()
+        target = Sphere.random_in_unit_sphere().add(hit_rec.p).add(hit_rec.n)
         r_scattered.A = hit_rec.p
-        r_scattered.B = target - hit_rec.p
+        r_scattered.B = target.sub(hit_rec.p)
         attenuation.x = self.albedo.x
         attenuation.y = self.albedo.y
         attenuation.z = self.albedo.z
@@ -24,14 +24,11 @@ class Lambertian (Material):
 
 class Emissive (Material):
 
-    __slots__ = ('intensity', )
+    __slots__ = ('color', )
 
     def __init__(self, albedo, intensity=1.0):
         self.albedo = albedo
-        self.intensity = intensity
-
-    def get_color(self):
-        return self.intensity * self.albedo
+        self.color = intensity * self.albedo
 
 class Metal (Material):
 
@@ -42,9 +39,9 @@ class Metal (Material):
         self.fuzz = min(fuzz, 1)
 
     def scatter(self, r_in, hit_rec, attenuation, r_scattered):
-        reflected = Vec.reflect(Vec.unit_vector(r_in.direction), hit_rec.n)
+        reflected = Vec.reflect_mv(Vec.unit_vector(r_in.direction), hit_rec.n)
         r_scattered.A = hit_rec.p
-        r_scattered.B = reflected + self.fuzz * Sphere.random_in_unit_sphere()
+        r_scattered.B = Sphere.random_in_unit_sphere().mul(self.fuzz).add(reflected)
         attenuation.x = self.albedo.x
         attenuation.y = self.albedo.y
         attenuation.z = self.albedo.z
@@ -61,9 +58,12 @@ class Dialectric (object):
     def refract(v, n, ior, refracted):
         uv = Vec.unit_vector(v)
         dt = Vec.dot(uv, n)
-        disc = 1.0 - ior * ior * (1 - dt * dt)
+        disc = 1 - ior * ior * (1 - dt * dt)
         if disc > 0:
-            refracted.copy(ior * (uv - n * dt) - n * sqrt(disc))
+            sqrt_disc = sqrt(disc)
+            refracted.x = ior * (uv.x - n.x * dt) - n.x * sqrt_disc
+            refracted.y = ior * (uv.y - n.y * dt) - n.y * sqrt_disc
+            refracted.z = ior * (uv.z - n.z * dt) - n.z * sqrt_disc
             return True
         else:
             return False
@@ -77,7 +77,7 @@ class Dialectric (object):
     def scatter(self, r_in, hit_rec, attenuation, r_scattered):
         r_in_dir = r_in.direction
         reflected = Vec.reflect(r_in_dir, hit_rec.n)
-        attenuation.set(1.0, 1.0, 1.0)
+        attenuation.set(1, 1, 1)
         refracted = Vec()
         if Vec.dot(r_in_dir, hit_rec.n) > 0:
             outward_normal = -hit_rec.n

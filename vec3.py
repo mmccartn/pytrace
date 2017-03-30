@@ -1,5 +1,4 @@
 from math import sqrt
-from random import random
 
 class Vec(object):
 
@@ -20,12 +19,6 @@ class Vec(object):
         self.y = y
         self.z = z
 
-    def randomize(self):
-        self.x = random()
-        self.y = random()
-        self.z = random()
-        return self
-
     @staticmethod
     def from_vec(v):
         return Vec(v.x, v.y, v.z)
@@ -42,40 +35,78 @@ class Vec(object):
         return Vec(x, -y, z)
 
     @staticmethod
-    def normalize(v):
-        return v / v.norm()
-
-    @staticmethod
     def unit_vector(v):
-        return Vec.normalize(v)
+        return v / v.length()
 
     @staticmethod
     def reflect(v, n):
-        return v - 2 * Vec.dot(v, n) * n
+        a = Vec.dot(v, n)
+        return (2 * a * n).neg_add(v)
 
-    def norm(self):
-        return sqrt(Vec.dot(self, self))
+    @staticmethod
+    def reflect_mv(v, n):
+        a = 2 * Vec.dot(v, n)
+        v.x = v.x - a * n.x
+        v.y = v.y - a * n.y
+        v.z = v.z - a * n.z
+        return v
 
     def squared_length(self):
         return Vec.dot(self, self)
 
     def length(self):
-        return self.norm()
+        return sqrt(Vec.dot(self, self))
 
     def __add__(self, v):
         return Vec(self.x + v.x, self.y + v.y, self.z + v.z)
 
+    def add(self, v):
+        self.x += v.x
+        self.y += v.y
+        self.z += v.z
+        return self
+
     def __neg__(self):
         return Vec(-self.x, -self.y, -self.z)
 
+    def neg(self):
+        self.x *= -1
+        self.y *= -1
+        self.z *= -1
+        return self
+
+    def neg_add(self, v):
+        self.x = v.x - self.x
+        self.y = v.y - self.y
+        self.z = v.z - self.z
+        return self
+
     def __sub__(self, v):
-        return self + (-v)
+        return Vec(self.x - v.x, self.y - v.y, self.z - v.z)
+
+    def sub(self, v):
+        self.x = self.x - v.x
+        self.y = self.y - v.y
+        self.z = self.z - v.z
+        return self
 
     def __mul__(self, v):
         if isinstance(v, Vec):
             return Vec(self.x * v.x, self.y * v.y, self.z * v.z)
         else:
             return Vec(self.x * v, self.y * v, self.z * v)
+
+    def mul(self, scalar):
+        self.x *= scalar
+        self.y *= scalar
+        self.z *= scalar
+        return self
+
+    def vec_mul(self, v):
+        self.x *= v.x
+        self.y *= v.y
+        self.z *= v.z
+        return self
 
     def __rmul__(self, v):
         return self.__mul__(v)
@@ -86,6 +117,15 @@ class Vec(object):
         else:
             return Vec(self.x / v, self.y / v, self.z / v)
 
+    def vec_div(self, v):
+        pass
+
+    def div(self, scalar):
+        self.x /= scalar
+        self.y /= scalar
+        self.z /= scalar
+        return self
+
     def __truediv__(self, v):
         return self.__div__(v)
 
@@ -95,14 +135,15 @@ class Vec(object):
     def __str__(self):
         return '(%.6f, %.6f, %.6f)' % (self.x, self.y, self.z)
 
+    def __repr__(self):
+        return self.__str__()
+
 class RGB(Vec):
 
     def __init__(self, x=0, y=0, z=0):
-        self.x = x / 255.0
-        self.y = y / 255.0
-        self.z = z / 255.0
-
-vec_one = Vec(1, 1, 1)
+        self.x = x / 255.99
+        self.y = y / 255.99
+        self.z = z / 255.99
 
 if __name__ == '__main__':
     pass
