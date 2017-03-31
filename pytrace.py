@@ -18,7 +18,6 @@ BG_COL_A = RGB(249, 249, 249)
 BG_COL_B = RGB(66, 139, 202)
 
 def write_image(p, w, h, name='balls.png'):
-    print('Writing out to file: {0}'.format(name))
     f = open(name, 'wb') # Taken from: http://pythonhosted.org/pypng/ex.html#colour
     w = png.Writer(w, h) # http://pythonhosted.org/pypng/png.html#png.Writer
     w.write(f, p)
@@ -122,6 +121,7 @@ def make_image(world, cam, width, height, samples):
     for ti in range(num_tasks):
         bar.update(ti)
         results.append(done_queue.get())
+        write_intermediate(results, width)
     bar.finish()
 
     for proc in range(num_cpus):
@@ -136,6 +136,13 @@ def make_image(world, cam, width, height, samples):
         p.append(result.row)
 
     return p
+
+def write_intermediate(results, width):
+    p = []
+    results.sort(key=lambda x: x.index, reverse=True)
+    for result in results:
+        p.append(result.row)
+    write_image(p, width, len(p), 'temp.png')
 
 def main():
     w = 3840
