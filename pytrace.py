@@ -13,6 +13,7 @@ from hittables import HitableList, Sphere
 from structs import RowResult, HitRecord
 from materials import Lambertian, Metal, Dialectric, Emissive
 
+MAXIMUM_DEPTH = 50
 BG_COL_A = RGB(249, 249, 249)
 BG_COL_B = RGB(66, 139, 202)
 
@@ -29,7 +30,7 @@ def color(ray, world, depth):
         scattered = Ray()
         attenuation = Vec()
         hit_mat = hit_rec.mat
-        if depth < 50 and hit_mat.scatter(ray, hit_rec, attenuation, scattered):
+        if depth < MAXIMUM_DEPTH and hit_mat.scatter(ray, hit_rec, attenuation, scattered):
             return color(scattered, world, depth + 1).vec_mul(attenuation)
         else:
             return Vec()
@@ -137,9 +138,9 @@ def make_image(world, cam, width, height, samples):
     return p
 
 def main():
-    w = 200
-    h = 100
-    s = 256
+    w = 3840
+    h = 2160
+    s = 5000
     start_time = time()
 
     spheres = HitableList()
@@ -148,10 +149,10 @@ def main():
     spheres.append(Sphere(Vec(1, 0, -1), 0.5, Metal(RGB(255, 238, 173)))) # Right
     spheres.append(Sphere(Vec(-1, 0, -1), 0.5, Dialectric(1.5))) # Left
 
-    lookfrom = Vec(-3, 1, 4)
+    lookfrom = Vec(0, 1, 4)
     lookat = Vec(0, 0, -1)
     dist_to_focus = (lookfrom - lookat).length()
-    aperture = 0.01
+    aperture = 0
     cam = Camera(w / h, 25, aperture, dist_to_focus, lookfrom, lookat)
 
     image = make_image(spheres, cam, w, h, s)

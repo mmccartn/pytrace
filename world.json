@@ -1,0 +1,57 @@
+"render": {
+    "image": {
+        "width": 3840,
+        "height": 2160,
+        "samples": 5000,
+        "maximum_depth": 50
+    },
+    "camera": {
+        "fov": 25,
+        "aperture": 0,
+        "look_from": [0, 1, 4],
+        "look_at": [0, 0, -1]
+    },
+    "background": {
+        "color_a": [249, 249, 249],
+        "color_b": [66, 139, 202],
+    },
+    "world": [
+        {
+            "type": "sphere",
+            "position": [0, 0, -1],
+            "radius": 0.5,
+            "material": {
+                "type": "lambertian",
+                "albedo": [92, 184, 92]
+            }
+        },
+        {
+            "type": "sphere",
+            "position": [0, -100.5, -1],
+            "radius": 100,
+            "material": {
+                "type": "lambertian",
+                "albedo": [217, 238, 173]
+            }
+        },
+        {
+            "type": "sphere",
+            "position": [1, 0, -1],
+            "radius": 0.5,
+            "material": {
+                "type": "metal",
+                "albedo": [255, 238, 173],
+                "fuzz": 1
+            }
+        },
+        {
+            "type": "sphere",
+            "position": [-1, 0, -1],
+            "radius": 0.5,
+            "material": {
+                "type": "dialectric",
+                "ior": 1.5
+            }
+        }
+    ]
+}
